@@ -1,2 +1,3 @@
 # continuousDeformation
-Repository created for personal use.
+
+Repository provided for personal use.
