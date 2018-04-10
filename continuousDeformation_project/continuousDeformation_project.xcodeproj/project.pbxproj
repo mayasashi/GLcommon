@@ -14,6 +14,7 @@
 		B56845282074B4170025FF40 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B56845272074B4170025FF40 /* IOKit.framework */; };
 		B568452A2074B41C0025FF40 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B56845292074B41C0025FF40 /* Cocoa.framework */; };
 		B568452C2074CAFD0025FF40 /* libglfw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B568452B2074CAFD0025FF40 /* libglfw3.a */; };
+		B5A965CE207C9BC900713460 /* GLcommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B5A965CD207C9BC900713460 /* GLcommon.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,6 +38,8 @@
 		B56845272074B4170025FF40 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		B56845292074B41C0025FF40 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		B568452B2074CAFD0025FF40 /* libglfw3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libglfw3.a; path = ../../../../../usr/local/lib/libglfw3.a; sourceTree = "<group>"; };
+		B5A965CC207C6BA000713460 /* GLcommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GLcommon.h; sourceTree = "<group>"; };
+		B5A965CD207C9BC900713460 /* GLcommon.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GLcommon.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +80,8 @@
 			isa = PBXGroup;
 			children = (
 				B56845192074B1C30025FF40 /* main.cpp */,
+				B5A965CC207C6BA000713460 /* GLcommon.h */,
+				B5A965CD207C9BC900713460 /* GLcommon.cpp */,
 			);
 			path = continuousDeformation_project;
 			sourceTree = "<group>";
@@ -151,6 +156,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B568451A2074B1C30025FF40 /* main.cpp in Sources */,
+				B5A965CE207C9BC900713460 /* GLcommon.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
