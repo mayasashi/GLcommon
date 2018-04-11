@@ -92,14 +92,14 @@ ERRenum GLcommon::createTexture(GLuint init_ID,const char *init_name){
         return ERRCHK_SUSPENDED;
     }
     
-    /*Check if neither ID nor name do not conflict with any of these existing in texture vector.*/
+    /*Check if neither ID nor name conflicts with any of these existing in texture vector.*/
     bool conflict_flg = false;
     for(std::vector<tex*>::iterator itr = texturevec.begin(); itr != texturevec.end(); ++itr)
     {
         if((*itr)->ID == init_ID || strcmp((*itr)->name,init_name) == 0) conflict_flg = true;
     }
     if(conflict_flg){
-        printf("SUSPENDED : Make sure neither specified ID nor name do not conflict with any of these existing in texture vector.\n");
+        printf("SUSPENDED : Make sure neither specified ID nor name conflicts with any of these existing in texture vector.\n");
         return ERRCHK_SUSPENDED;
     }
     
@@ -109,3 +109,4 @@ ERRenum GLcommon::createTexture(GLuint init_ID,const char *init_name){
     
     return ERRCHK_SUCCESS;
 }
+
