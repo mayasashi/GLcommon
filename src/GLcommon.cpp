@@ -5,19 +5,9 @@
 //  Created by 鶴拳 on 2018/04/10.
 //  Copyright © 2018年 mayasashi. All rights reserved.
 //
-#define PLATFORM_MAC
 
-
-#include <iostream>
-#include <vector>
-
-#ifdef PLATFORM_WIN
-#include <gl/glew.h>
-#else
-#include <OpenGL/gl3.h>
-#endif
-
-#include <GL/glfw3.h>   //must create folder named GL under usr_local_include or usr_include
+#include "GLcommon_includes.h"
+#include "GLcommon_format.h"
 
 typedef enum{
     ERRCHK_SUCCESS,
@@ -42,16 +32,21 @@ struct windowInfo{
 struct tex{
     const GLuint ID;
     const char *name;
-    GLenum handler;
+	const GLuint width;
+	const GLuint height;
+    GLuint handler;
     void *srcDataPtr;
     bool minflg;
     bool magflg;
-    GLuint width;
-    GLuint height;
     GLint internalformat;
     GLenum internaltype;
     
-    tex(GLuint init_ID,const char *init_name) : ID(init_ID) , name(init_name) {}
+    tex(GLuint init_ID,const char *init_name, GLuint init_width, GLuint init_height) :
+		ID(init_ID) , 
+		name(init_name) , 
+		width(init_width), 
+		height(init_height) 
+	{}
 };
 
 class GLcommon {
@@ -62,7 +57,11 @@ public:
     void createWindow(int width,int height);
     void createVAO();
     void createVBO();
-    ERRenum createTexture(GLuint init_ID,const char *init_name);
+	ERRenum createTexture(GLuint init_ID, const char *init_name, int width, int height);
+	ERRenum transferDataToTexture(GLuint init_ID, void *srcData, GLint internalFormat, GLenum internaltype);
+	ERRenum transferDataToTexture(const char *init_name, void *srcData, GLint internalFormat, GLenum internaltype);
+	ERRenum transferDataToTexture(GLuint init_ID, const char *init_name, void *srcData, GLint internalFormat, GLenum internaltype);
+
     void createShader();
     void createProgram();
     void flush();
@@ -70,6 +69,7 @@ public:
 private:
     GLFWwindow *window;
     std::vector<tex*> texturevec;
+	ERRenum transferDataToTextureInternal(GLenum handler);
     
 };
 
@@ -84,7 +84,7 @@ GLcommon::~GLcommon(){
 }
 
 
-ERRenum GLcommon::createTexture(GLuint init_ID,const char *init_name){
+ERRenum GLcommon::createTexture(GLuint init_ID, const char *init_name, int width, int height) {
     
     /*Check if name is set properly*/
     if(strcmp(init_name, "") == 0 || init_name == nullptr){
@@ -103,10 +103,37 @@ ERRenum GLcommon::createTexture(GLuint init_ID,const char *init_name){
         return ERRCHK_SUSPENDED;
     }
     
-    tex* texture = new tex(init_ID,init_name);
-    
+    tex* texture = new tex(init_ID,init_name,width,height);
+
+	glGenTextures(1, &(texture->handler));
+
     texturevec.push_back(texture);
     
     return ERRCHK_SUCCESS;
+
 }
+
+ERRenum GLcommon::transferDataToTexture(GLuint init_ID, void *srcData, GLint internalformat, GLenum internaltype) {
+	std::vector<tex*>::iterator itr = texturevec.begin();
+	while ((*itr)->ID != init_ID) {
+		++itr;
+		if (itr == texturevec.end()) {
+			printf("SUSPENDED at transferDataToTexure() : texture not registered.\n");
+			return ERRCHK_SUSPENDED;
+		}
+	}
+	
+	glBindTexture(GL_TEXTURE_2D, (*itr)->handler);
+
+	(*itr)->internalformat = internalformat;
+	(*itr)->internaltype = internaltype;
+
+
+	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, (*itr)->width, (*itr)->height, 0, GL_RGBA, internaltype, srcData);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	return ERRCHK_SUCCESS;
+}
+
 
