@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:continuousDeformation_project.xcodeproj">
+      location = "self:continuousDeformation_imac.xcodeproj">
    </FileRef>
 </Workspace>
