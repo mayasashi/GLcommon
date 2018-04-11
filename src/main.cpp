@@ -8,8 +8,13 @@
 
 #include <iostream>
 
+void print_MSG(const char &msg){
+    printf("%s\n",&msg);
+}
 
 int main(int argc, const char * argv[]) {
     std::cout << "Hello, World!\n";
+    const char *g = NULL;
+    print_MSG(*g);
     return 0;
 }
