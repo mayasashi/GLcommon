@@ -5,11 +5,20 @@
 //  Created by 鶴拳 on 2018/04/10.
 //  Copyright © 2018年 mayasashi. All rights reserved.
 //
+#define PLATFORM_WIN
 
 #include <iostream>
 #include <vector>
-#include <GL/glfw3.h>   //must create folder named GL under usr_local_include or usr_include
+
+#ifdef PLATFORM_WIN
+#include <gl/glew.h>
+#else
 #include <OpenGL/gl3.h>
+#endif
+
+#include <GL/glfw3.h>   //must create folder named GL under usr_local_include or usr_include
+
+
 
 typedef struct{
     GLuint GL_version_major;
