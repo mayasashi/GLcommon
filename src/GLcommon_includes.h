@@ -1,7 +1,7 @@
 #ifndef GLCOMMON_INCLUDES
 #define GLCOMMON_INCLUDES
 
-#define PLATFORM_WIN
+#define PLATFORM_MAC
 
 #include <iostream>
 #include <vector>
