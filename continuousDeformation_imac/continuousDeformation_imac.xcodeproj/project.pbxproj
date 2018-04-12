@@ -29,6 +29,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B54B4006207EE58C0002BE26 /* GLcommon_format.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLcommon_format.h; path = ../../src/GLcommon_format.h; sourceTree = "<group>"; };
+		B54B4007207EE58C0002BE26 /* GLcommon_includes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLcommon_includes.h; path = ../../src/GLcommon_includes.h; sourceTree = "<group>"; };
 		B5A965D8207DACFF00713460 /* continuousDeformation_imac */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = continuousDeformation_imac; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5A965E2207DAD0E00713460 /* GLcommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GLcommon.cpp; path = ../../src/GLcommon.cpp; sourceTree = "<group>"; };
 		B5A965E3207DAD0E00713460 /* GLcommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLcommon.h; path = ../../src/GLcommon.h; sourceTree = "<group>"; };
@@ -79,6 +81,8 @@
 				B5A965E2207DAD0E00713460 /* GLcommon.cpp */,
 				B5A965E3207DAD0E00713460 /* GLcommon.h */,
 				B5A965E4207DAD0E00713460 /* main.cpp */,
+				B54B4006207EE58C0002BE26 /* GLcommon_format.h */,
+				B54B4007207EE58C0002BE26 /* GLcommon_includes.h */,
 			);
 			path = continuousDeformation_imac;
 			sourceTree = "<group>";
