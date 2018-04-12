@@ -9,11 +9,10 @@
 #include "GLcommon_includes.h"
 #include "GLcommon_format.h"
 
-#define STR_UNSPECIFIED ""
 
 typedef enum{
     ERRCHK_SUCCESS,
-    ERRCHK_SUSPENDED,
+    ERRCHK_SUSPEND,
     ERRCHK_UNKNOWN
 }ERRenum;
 
@@ -40,7 +39,7 @@ using uniformLocation = attribLocation;
 
 struct shader{
     const GLuint ID;
-    const char *name;
+    const char *label;
     const GLenum type;
     const char *path;
     GLuint handler;
@@ -48,9 +47,9 @@ struct shader{
     std::vector<uniformLocation> uniformLocation;
     bool compileFlg;
     
-    shader(const GLuint init_ID,const char * init_name,const GLenum init_type, const char * init_path) :
+    shader(const GLuint init_ID,const char * init_label,const GLenum init_type, const char * init_path) :
         ID(init_ID),
-        name(init_name),
+        label(init_label),
         type(init_type),
         path(init_path)
     {}
@@ -59,21 +58,21 @@ struct shader{
 
 struct program{
     const GLuint ID;
-    const char *name;
+    const char *label;
     GLuint handler;
     shader *fragmentShader;
     shader *vertexShader;
     bool linkFlg;
     
-    program(const GLuint init_ID,const char *init_name) :
+    program(const GLuint init_ID,const char *init_label) :
         ID(init_ID),
-        name(init_name)
+        label(init_label)
     {}
 };
 
 struct tex{
     const GLuint ID;
-    const char *name;
+    const char *label;
 	const GLuint width;
 	const GLuint height;
     GLuint handler;
@@ -83,9 +82,9 @@ struct tex{
     GLint internalformat;
     GLenum internaltype;
     
-    tex(GLuint init_ID,const char *init_name, GLuint init_width, GLuint init_height) :
+    tex(GLuint init_ID,const char *init_label, GLuint init_width, GLuint init_height) :
 		ID(init_ID) , 
-		name(init_name) , 
+		label(init_label) , 
 		width(init_width), 
 		height(init_height) 
 	{}
@@ -99,19 +98,20 @@ public:
     void createWindow(int width,int height);
     void createVAO();
     void createVBO();
-	ERRenum createTexture(GLuint init_ID, const char *init_name, int width, int height);
+	ERRenum createTexture(GLuint init_ID, const char *init_label, int width, int height);
 	ERRenum transferDataToTexture(GLuint init_ID, void *srcData, GLint internalFormat, GLenum internaltype);
 
-    void createShader();
-    void createProgram();
+    ERRenum createShader(const GLuint init_ID, const char *init_label, const GLenum init_type, const char * init_path);
+    ERRenum createProgram(const GLuint init_ID, const char *init_label);
     void flush();
     
 private:
+	template <typename T> ERRenum checkID(const GLuint ID, const char *func_name, std::vector<T> vec);
+	template <typename T> ERRenum checklabel(const char *label, const char *func_name, std::vector<T> vec);
     GLFWwindow *window;
     std::vector<tex*> texturevec;
     std::vector<shader*> shadervec;
     std::vector<program*> programvec;
-	ERRenum transferDataToTextureInternal(GLenum handler);
     
 };
 
@@ -125,31 +125,73 @@ GLcommon::~GLcommon(){
     glfwTerminate();
 }
 
+template <typename T> 
+ERRenum GLcommon::checkID(const GLuint ID, const char *func_name, std::vector<T> vec) {
+	bool conflict_flg = false;
+	for (std::vector<T>::iterator itr = vec.begin(); itr != vec.end(); ++itr)
+	{
+		if ((*itr)->ID == ID) conflict_flg = true;
+	}
+	if (conflict_flg) {
+		printf("SUSPENDED (%s): excisting ID specified.\n",func_name);
+		return ERRCHK_SUSPEND;
+	}
+	return ERRCHK_SUCCESS;
+}
 
-ERRenum GLcommon::createTexture(GLuint init_ID, const char *init_name, int width, int height) {
-    
-    /*Check if name is set properly*/
-    if(strcmp(init_name, "") == 0 || init_name == nullptr){
-        printf("SUSPENDED : Make sure texture name is not empty and pointer is not nullptr.\n");
-        return ERRCHK_SUSPENDED;
-    }
-    
-    /*Check if neither ID nor name conflicts with any of these existing in texture vector.*/
-    bool conflict_flg = false;
-    for(std::vector<tex*>::iterator itr = texturevec.begin(); itr != texturevec.end(); ++itr)
-    {
-        if((*itr)->ID == init_ID || strcmp((*itr)->name,init_name) == 0) conflict_flg = true;
-    }
-    if(conflict_flg){
-        printf("SUSPENDED : Make sure neither specified ID nor name conflicts with any of these existing in texture vector.\n");
-        return ERRCHK_SUSPENDED;
-    }
-    
-    tex* texture = new tex(init_ID,init_name,width,height);
+template <typename T> 
+ERRenum GLcommon::checklabel(const char *label, const char *func_name, std::vector<T> vec) {
+
+	if (strcmp(label, "") == 0 || label == nullptr) {
+		printf("SUSPENDED (%s) : label is empty.\n",func_name);
+		return ERRCHK_SUSPEND;
+	}
+	bool conflict_flg = false;
+	for (std::vector<T>::iterator itr = vec.begin(); itr != vec.end(); ++itr)
+	{
+		if (strcmp((*itr)->label, label) == 0) conflict_flg = true;
+	}
+	if (conflict_flg) {
+		printf("SUSPENDED (%s): excisting label specified.\n", func_name);
+		return ERRCHK_SUSPEND;
+	}
+
+	return ERRCHK_SUCCESS;
+}
+
+ERRenum GLcommon::createProgram(const GLuint init_ID, const char *init_label) {
+
+	if (checkID<program*>(init_ID, __func__, programvec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+	if (checklabel<program*>(init_label, __func__, programvec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+
+	program *pr = new program(init_ID, init_label);
+	programvec.push_back(pr);
+
+	pr->handler = glCreateProgram();
+
+	return ERRCHK_SUCCESS;
+}
+
+ERRenum GLcommon::createShader(const GLuint init_ID, const char *init_label, const GLenum init_type, const char * init_path) {
+	if (checkID<shader*>(init_ID, __func__, shadervec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+	if (checklabel<shader*>(init_label, __func__, shadervec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+
+	shader *sh = new shader(init_ID, init_label, init_type, init_path);
+	shadervec.push_back(sh);
+
+	sh->handler = glCreateShader(sh->type);
+}
+
+ERRenum GLcommon::createTexture(GLuint init_ID, const char *init_label, int width, int height) {
+
+	if (checkID<tex*>(init_ID, __func__, texturevec) != ERRCHK_SUCCESS) ERRCHK_SUSPEND;
+	if (checklabel<tex*>(init_label, __func__, texturevec) != ERRCHK_SUCCESS) ERRCHK_SUSPEND;
+
+    tex* texture = new tex(init_ID,init_label,width,height);
+	texturevec.push_back(texture);
 
 	glGenTextures(1, &(texture->handler));
 
-    texturevec.push_back(texture);
     
     return ERRCHK_SUCCESS;
 }
@@ -160,7 +202,7 @@ ERRenum GLcommon::transferDataToTexture(GLuint init_ID, void *srcData, GLint int
     
     if(textureformat == 0){
         printf("SUSPENDED at transferDataToTexture() : Illegal texture internal format.\n");
-        return ERRCHK_SUSPENDED;
+        return ERRCHK_SUSPEND;
     }
     
 	std::vector<tex*>::iterator itr = texturevec.begin();
@@ -168,7 +210,7 @@ ERRenum GLcommon::transferDataToTexture(GLuint init_ID, void *srcData, GLint int
 		++itr;
 		if (itr == texturevec.end()) {
 			printf("SUSPENDED at transferDataToTexure() : Texture not registered.\n");
-			return ERRCHK_SUSPENDED;
+			return ERRCHK_SUSPEND;
 		}
 	}
 	
