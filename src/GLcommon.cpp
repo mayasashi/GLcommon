@@ -33,7 +33,7 @@ struct windowInfo{
 
 struct attribLocation{
     GLuint locator;
-    GLuint str;
+    char *str;
 };
 
 using uniformLocation = attribLocation;
