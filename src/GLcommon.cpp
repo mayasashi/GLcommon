@@ -128,7 +128,7 @@ GLcommon::~GLcommon(){
 template <typename T> 
 ERRenum GLcommon::checkID(const GLuint ID, const char *func_name, std::vector<T> vec) {
 	bool conflict_flg = false;
-	for (std::vector<T>::iterator itr = vec.begin(); itr != vec.end(); ++itr)
+	for (typename std::vector<T>::iterator itr = vec.begin(); itr != vec.end(); ++itr)
 	{
 		if ((*itr)->ID == ID) conflict_flg = true;
 	}
@@ -147,7 +147,7 @@ ERRenum GLcommon::checklabel(const char *label, const char *func_name, std::vect
 		return ERRCHK_SUSPEND;
 	}
 	bool conflict_flg = false;
-	for (std::vector<T>::iterator itr = vec.begin(); itr != vec.end(); ++itr)
+	for (typename std::vector<T>::iterator itr = vec.begin(); itr != vec.end(); ++itr)
 	{
 		if (strcmp((*itr)->label, label) == 0) conflict_flg = true;
 	}
@@ -172,7 +172,8 @@ ERRenum GLcommon::createProgram(const GLuint init_ID, const char *init_label) {
 	return ERRCHK_SUCCESS;
 }
 
-ERRenum GLcommon::createShader(const GLuint init_ID, const char *init_label, const GLenum init_type, const char * init_path) {
+ERRenum GLcommon::createShader(const GLuint init_ID, const char *init_label, const GLenum init_type, const char * init_path )
+{
 	if (checkID<shader*>(init_ID, __func__, shadervec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
 	if (checklabel<shader*>(init_label, __func__, shadervec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
 
@@ -180,6 +181,8 @@ ERRenum GLcommon::createShader(const GLuint init_ID, const char *init_label, con
 	shadervec.push_back(sh);
 
 	sh->handler = glCreateShader(sh->type);
+    
+    return ERRCHK_SUCCESS;
 }
 
 ERRenum GLcommon::createTexture(GLuint init_ID, const char *init_label, int width, int height) {
