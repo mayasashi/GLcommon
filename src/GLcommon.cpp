@@ -41,19 +41,20 @@ struct shader{
     const GLuint ID;
     const char *label;
     const GLenum type;
-    const char *path;
+	const char *path;
+    const char *src;
     GLuint handler;
     std::vector<attribLocation> attribLocation;
     std::vector<uniformLocation> uniformLocation;
     bool compileFlg;
     
-    shader(const GLuint init_ID,const char * init_label,const GLenum init_type, const char * init_path) :
-        ID(init_ID),
-        label(init_label),
-        type(init_type),
-        path(init_path)
+	shader(const GLuint init_ID, const char * init_label, const GLenum init_type, const char * init_path, const char * init_src) :
+		ID(init_ID),
+		label(init_label),
+		type(init_type),
+		path(init_path),
+		src(init_src)
     {}
-    
 };
 
 struct program{
@@ -177,10 +178,42 @@ ERRenum GLcommon::createShader(const GLuint init_ID, const char *init_label, con
 	if (checkID<shader*>(init_ID, __func__, shadervec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
 	if (checklabel<shader*>(init_label, __func__, shadervec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
 
-	shader *sh = new shader(init_ID, init_label, init_type, init_path);
+	std::ifstream file;
+
+	file.open(init_path);
+	if (file.fail()) {
+		printf("SUSPENDED [%s] , (%s) : shader source not found.\n", init_label ,__func__);
+		return ERRCHK_SUSPEND;
+	}
+
+	std::string str_buffer = "";
+	std::string str_total = "";
+
+	while (std::getline(file, str_buffer)) {
+		str_total += str_buffer + "\n";
+	}
+	
+	const char *src = str_total.c_str();
+
+
+	shader *sh = new shader(init_ID, init_label, init_type, init_path, src);
 	shadervec.push_back(sh);
 
 	sh->handler = glCreateShader(sh->type);
+
+
+	glShaderSource(sh->handler, 1, &src, NULL);
+	glCompileShader(sh->handler);
+
+	GLint checkCompileStatus;
+	GLint shaderInfoLogLength;
+	glGetShaderiv(sh->handler, GL_COMPILE_STATUS, &checkCompileStatus);
+	glGetShaderiv(sh->handler, GL_INFO_LOG_LENGTH, &shaderInfoLogLength);
+	if (shaderInfoLogLength > 1) {
+		GLchar *shaderCompileLog = (GLchar *)malloc(shaderInfoLogLength);
+		glGetShaderInfoLog(sh->handler, shaderInfoLogLength, NULL, shaderCompileLog);
+		free(shaderCompileLog);
+	}
     
     return ERRCHK_SUCCESS;
 }

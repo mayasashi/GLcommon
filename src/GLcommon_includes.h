@@ -1,10 +1,12 @@
 #ifndef GLCOMMON_INCLUDES
 #define GLCOMMON_INCLUDES
 
-#define PLATFORM_MAC
+#define PLATFORM_WIN
 
 #include <iostream>
 #include <vector>
+#include <string>
+#include <fstream>
 
 #ifdef PLATFORM_WIN
 #define GLEW_STATIC
