@@ -17,4 +17,7 @@
 
 #include <GL/glfw3.h>   //must create folder named GL under usr_local_include or usr_include
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 #endif

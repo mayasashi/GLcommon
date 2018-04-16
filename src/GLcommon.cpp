@@ -220,8 +220,8 @@ ERRenum GLcommon::createShader(const GLuint init_ID, const char *init_label, con
 
 ERRenum GLcommon::createTexture(GLuint init_ID, const char *init_label, int width, int height) {
 
-	if (checkID<tex*>(init_ID, __func__, texturevec) != ERRCHK_SUCCESS) ERRCHK_SUSPEND;
-	if (checklabel<tex*>(init_label, __func__, texturevec) != ERRCHK_SUCCESS) ERRCHK_SUSPEND;
+	if (checkID<tex*>(init_ID, __func__, texturevec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+	if (checklabel<tex*>(init_label, __func__, texturevec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
 
     tex* texture = new tex(init_ID,init_label,width,height);
 	texturevec.push_back(texture);
@@ -237,7 +237,7 @@ ERRenum GLcommon::transferDataToTexture(GLuint init_ID, void *srcData, GLint int
     GLenum textureformat = CONVERT(internalformat);
     
     if(textureformat == 0){
-        printf("SUSPENDED at transferDataToTexture() : Illegal texture internal format.\n");
+        printf("SUSPENDED (%s) : Illegal texture internal format.\n", __func__);
         return ERRCHK_SUSPEND;
     }
     
@@ -245,7 +245,7 @@ ERRenum GLcommon::transferDataToTexture(GLuint init_ID, void *srcData, GLint int
 	while ((*itr)->ID != init_ID) {
 		++itr;
 		if (itr == texturevec.end()) {
-			printf("SUSPENDED at transferDataToTexure() : Texture not registered.\n");
+			printf("SUSPENDED (%s) : Texture not registered.\n",__func__);
 			return ERRCHK_SUSPEND;
 		}
 	}
@@ -259,6 +259,8 @@ ERRenum GLcommon::transferDataToTexture(GLuint init_ID, void *srcData, GLint int
 	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, (*itr)->width, (*itr)->height, 0, textureformat, internaltype, srcData);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+
 	return ERRCHK_SUCCESS;
 }
 
