@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B50D7CCA2085CB97003995B4 /* libfreetype.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B50D7CC92085CB97003995B4 /* libfreetype.a */; };
 		B5A965E5207DAD0E00713460 /* GLcommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B5A965E2207DAD0E00713460 /* GLcommon.cpp */; };
 		B5A965E6207DAD0E00713460 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B5A965E4207DAD0E00713460 /* main.cpp */; };
 		B5A965E9207DAD3C00713460 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5A965E8207DAD3C00713460 /* OpenGL.framework */; };
@@ -29,6 +30,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B50D7CC92085CB97003995B4 /* libfreetype.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfreetype.a; path = ../../../../../usr/local/lib/libfreetype.a; sourceTree = "<group>"; };
 		B54B4006207EE58C0002BE26 /* GLcommon_format.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLcommon_format.h; path = ../../src/GLcommon_format.h; sourceTree = "<group>"; };
 		B54B4007207EE58C0002BE26 /* GLcommon_includes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLcommon_includes.h; path = ../../src/GLcommon_includes.h; sourceTree = "<group>"; };
 		B5A965D8207DACFF00713460 /* continuousDeformation_imac */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = continuousDeformation_imac; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -47,6 +49,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B50D7CCA2085CB97003995B4 /* libfreetype.a in Frameworks */,
 				B5A965F1207DADA200713460 /* libglfw3.a in Frameworks */,
 				B5A965EF207DAD5000713460 /* IOKit.framework in Frameworks */,
 				B5A965ED207DAD4A00713460 /* Cocoa.framework in Frameworks */,
@@ -90,6 +93,7 @@
 		B5A965E7207DAD3C00713460 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				B50D7CC92085CB97003995B4 /* libfreetype.a */,
 				B5A965F0207DADA200713460 /* libglfw3.a */,
 				B5A965EE207DAD5000713460 /* IOKit.framework */,
 				B5A965EC207DAD4A00713460 /* Cocoa.framework */,
@@ -279,6 +283,7 @@
 				HEADER_SEARCH_PATHS = (
 					/usr/include,
 					/usr/local/include,
+					/usr/local/include/freetype2,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					/usr/local/lib,
@@ -295,6 +300,7 @@
 				HEADER_SEARCH_PATHS = (
 					/usr/include,
 					/usr/local/include,
+					/usr/local/include/freetype2,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					/usr/local/lib,
