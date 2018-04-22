@@ -18,17 +18,17 @@ int main(void)
 	}
 
 	FT_Face face;
-	if (FT_New_Face(library, "C:\\Windows\\Fonts\\arial.ttf", 0, &face) != FT_Err_Ok) {
+	if (FT_New_Face(library, "C:\\Windows\\Fonts\\times.ttf", 0, &face) != FT_Err_Ok) {
 		printf("SUSPENDED (%s) : an error occurred while loading a font face.\n", __func__);
 		return finish();
 	}
-	if (FT_Set_Char_Size(face, 0, 16 * 64, 72, 72) != FT_Err_Ok) {
+	if (FT_Set_Char_Size(face, 0, 10 * 64, 72, 72) != FT_Err_Ok) {
 		printf("SUSPENDED (%s) : an error occurred while setting char size. \n", __func__);
 		return finish();
 	}
 
 	FT_UInt glyph_index;
-	glyph_index = FT_Get_Char_Index(face, 'A');
+	glyph_index = FT_Get_Char_Index(face, '5');
 	if (FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT) != FT_Err_Ok) {
 		printf("WARNING (%s) : improper call of load glyph function. render result may be corrupted. \n", __func__);
 	}

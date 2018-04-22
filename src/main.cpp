@@ -8,13 +8,20 @@
 
 #include <iostream>
 
-void print_MSG(const char &msg){
-    printf("%s\n",&msg);
+int finish() {
+	char str[128];
+	printf("Press any key to continue.\n");
+	scanf_s("%c", &str[0]);
+	return 0;
 }
 
 int main(int argc, const char * argv[]) {
-    std::cout << "Hello, World!\n";
-    const char *g = NULL;
-    print_MSG(*g);
-    return 0;
+	const int *a;
+	int b = 10;
+	a = &b;
+	printf("%d\n", *a);
+	*(&b) = 20;
+	printf("%d\n", *a);
+
+    return finish();
 }

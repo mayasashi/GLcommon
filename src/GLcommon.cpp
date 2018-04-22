@@ -9,7 +9,6 @@
 #include "GLcommon_includes.h"
 #include "GLcommon_format.h"
 
-
 typedef enum{
     ERRCHK_SUCCESS,
     ERRCHK_SUSPEND,
@@ -43,7 +42,7 @@ struct shader{
     const GLenum type;
 	const char *path;
     const char *src;
-    GLuint handler;
+    GLuint handler = 0;
     std::vector<attribLocation> attribLocation;
     std::vector<uniformLocation> uniformLocation;
     bool compileFlg;
@@ -60,7 +59,7 @@ struct shader{
 struct program{
     const GLuint ID;
     const char *label;
-    GLuint handler;
+    GLuint handler = 0;
     shader *fragmentShader;
     shader *vertexShader;
     bool linkFlg;
@@ -76,7 +75,7 @@ struct tex{
     const char *label;
 	const GLuint width;
 	const GLuint height;
-    GLuint handler;
+    GLuint handler = 0;
     void *srcDataPtr;
     bool minflg;
     bool magflg;
@@ -91,6 +90,32 @@ struct tex{
 	{}
 };
 
+struct vbo
+{
+	const GLuint ID;
+	const char *label;
+	GLuint handler = 0;
+	const void *src_data;
+	GLuint vertex_dim;
+	GLuint vertex_total;
+	GLenum type;
+	GLboolean normalized;
+	GLsizei stride;
+
+	vbo(GLuint init_ID, const char *init_label) : 
+		ID(init_ID),
+		label(init_label)
+	{}
+
+};
+
+struct vertexAttribArray
+{
+	GLuint vbo_ID;
+	GLuint program_ID;
+
+};
+
 class GLcommon {
     
 public:
@@ -99,30 +124,34 @@ public:
 
     void createWindow(int width,int height);
 
-	ERRenum createTexture(GLuint init_ID, const char *init_label, int width, int height);
-	ERRenum transferDataToTexture(GLuint init_ID, const void *srcData, GLint internalFormat, GLenum internaltype);
+	ERRenum Texture_Create(GLuint init_ID, const char *init_label, int width, int height);
+	ERRenum Texture_Store(GLuint init_ID, const void *srcData, GLint internalFormat, GLenum internaltype);
 
-    ERRenum createShader(GLuint init_ID, const char *init_label, GLenum init_type, const char * init_path);
-    ERRenum createProgram(GLuint init_ID, const char *init_label);
-	ERRenum attachShaderToProgram(GLuint programID, GLuint shaderID, GLenum shaderType);
-	ERRenum linkProgram(GLuint programID);
+    ERRenum Shader_Create(GLuint init_ID, const char *init_label, GLenum init_type, const char * init_path);
+    ERRenum Program_Create(GLuint init_ID, const char *init_label);
+	ERRenum Program_AttachShader(GLuint programID, GLuint shaderID, GLenum shaderType);
+	ERRenum Program_LinkShader(GLuint programID);
 
-	ERRenum associateAttribLocation(GLuint shaderID, const std::vector<attribLocation> &vec);
-	ERRenum associateUniformLocation(GLuint shaderID, const std::vector<uniformLocation> &vec);
+	ERRenum Shader_AssociateAttribLocation(GLuint shaderID, const std::vector<attribLocation> &vec);
+	ERRenum Shader_AssociateUniformLocation(GLuint shaderID, const std::vector<uniformLocation> &vec);
 
-    ERRenum createVAO();
+    ERRenum VAO_Create();
 
-    ERRenum createVBO(GLuint init_ID);
+    ERRenum VBO_Create(GLuint init_ID, const char *init_label);
+	ERRenum VBO_StoreEmpty(GLuint ID, GLsizei size);
+	ERRenum VBO_StoreData(GLuint ID, GLuint vertex_dim, GLuint vertex_total, GLenum type, GLboolean normalized, GLsizei stride, const void *src_data);
 
     void flush();
     
 private:
 	template <typename T> ERRenum checkID(GLuint ID, const char *func_name, const std::vector<T>& vec);
+	template <typename T> ERRenum findID(GLuint ID, const std::vector<T>& vec, GLuint &index);
 	template <typename T> ERRenum checklabel(const char *label, const char *func_name, const std::vector<T>& vec);
     GLFWwindow *window;
     std::vector<tex*> texturevec;
     std::vector<shader*> shadervec;
     std::vector<program*> programvec;
+	std::vector<vbo*> vbovec;
     
 };
 
@@ -150,6 +179,13 @@ ERRenum GLcommon::checkID(GLuint ID, const char *func_name, const std::vector<T>
 	return ERRCHK_SUCCESS;
 }
 
+template <typename T> ERRenum GLcommon::findID(GLuint ID, const std::vector<T>& vec, GLuint &index)
+{
+	typename std::vector<T>::const_iterator itr = vec.begin();
+	while()
+	return ERRCHK_SUCCESS;
+}
+
 template <typename T> 
 ERRenum GLcommon::checklabel(const char *label, const char *func_name, const std::vector<T>& vec) {
 
@@ -170,7 +206,7 @@ ERRenum GLcommon::checklabel(const char *label, const char *func_name, const std
 	return ERRCHK_SUCCESS;
 }
 
-ERRenum GLcommon::createProgram(GLuint init_ID, const char *init_label) {
+ERRenum GLcommon::Program_Create(GLuint init_ID, const char *init_label) {
 
 	if (checkID<program*>(init_ID, __func__, programvec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
 	if (checklabel<program*>(init_label, __func__, programvec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
@@ -183,7 +219,7 @@ ERRenum GLcommon::createProgram(GLuint init_ID, const char *init_label) {
 	return ERRCHK_SUCCESS;
 }
 
-ERRenum GLcommon::createShader(GLuint init_ID, const char *init_label, GLenum init_type, const char * init_path )
+ERRenum GLcommon::Shader_Create(GLuint init_ID, const char *init_label, GLenum init_type, const char * init_path )
 {
 	if (checkID<shader*>(init_ID, __func__, shadervec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
 	if (checklabel<shader*>(init_label, __func__, shadervec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
@@ -228,7 +264,7 @@ ERRenum GLcommon::createShader(GLuint init_ID, const char *init_label, GLenum in
     return ERRCHK_SUCCESS;
 }
 
-ERRenum GLcommon::createTexture(GLuint init_ID, const char *init_label, int width, int height) {
+ERRenum GLcommon::Texture_Create(GLuint init_ID, const char *init_label, int width, int height) {
 
 	if (checkID<tex*>(init_ID, __func__, texturevec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
 	if (checklabel<tex*>(init_label, __func__, texturevec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
@@ -242,7 +278,7 @@ ERRenum GLcommon::createTexture(GLuint init_ID, const char *init_label, int widt
     return ERRCHK_SUCCESS;
 }
 
-ERRenum GLcommon::transferDataToTexture(GLuint init_ID, const void *srcData, GLint internalformat, GLenum internaltype) {
+ERRenum GLcommon::Texture_Store(GLuint init_ID, const void *srcData, GLint internalformat, GLenum internaltype) {
     
     GLenum textureformat = CONVERT(internalformat);
     
@@ -273,4 +309,31 @@ ERRenum GLcommon::transferDataToTexture(GLuint init_ID, const void *srcData, GLi
 	return ERRCHK_SUCCESS;
 }
 
+ERRenum GLcommon::VBO_Create(GLuint init_ID, const char *init_label)
+{
+	if (checkID<vbo*>(init_ID, __func__, vbovec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+	if (checklabel<vbo*>(init_label, __func__, vbovec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+
+	vbo *newvbo = new vbo(init_ID, init_label);
+
+	if (newvbo == NULL) {
+		printf("SUSPENDED (%s) : failed to initialize vbo.\n", __func__);
+		return ERRCHK_SUSPEND;
+	}
+
+	glGenBuffers(1, &(newvbo->handler));
+
+	if (newvbo->handler == 0) {
+		printf("SUSPENDED (%s) : failed to initialize vbo.\n", __func__);
+		return ERRCHK_SUSPEND;
+	}
+
+	return ERRCHK_SUCCESS;
+}
+
+ERRenum GLcommon::VBO_StoreData(GLuint ID, GLuint vertex_dim, GLuint vertex_total, GLenum type, GLboolean normalized, GLsizei stride, const void *src_data)
+{
+
+	return ERRCHK_SUCCESS;
+}
 
