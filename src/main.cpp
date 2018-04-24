@@ -8,13 +8,6 @@
 
 #include <iostream>
 
-int finish() {
-	char str[128];
-	printf("Press any key to continue.\n");
-	scanf_s("%c", &str[0]);
-	return 0;
-}
-
 int main(int argc, const char * argv[]) {
 	const int *a;
 	int b = 10;
@@ -23,5 +16,5 @@ int main(int argc, const char * argv[]) {
 	*(&b) = 20;
 	printf("%d\n", *a);
 
-    return finish();
+    return 0;
 }

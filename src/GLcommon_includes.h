@@ -1,7 +1,7 @@
 #ifndef GLCOMMON_INCLUDES
 #define GLCOMMON_INCLUDES
 
-#define PLATFORM_WIN
+#define PLATFORM_MAC
 
 #include <iostream>
 #include <vector>
@@ -17,7 +17,7 @@
 
 #include <GL/glfw3.h>   //must create folder named GL under usr_local_include or usr_include
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
+//#include <ft2build.h>
+//#include FT_FREETYPE_H
 
 #endif
