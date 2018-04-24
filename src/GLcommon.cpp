@@ -15,6 +15,11 @@ typedef enum{
     ERRCHK_UNKNOWN
 }ERRenum;
 
+typedef enum{
+    ATTRIB_LOCATION,
+    UNIFORM_LOCATION
+}LocationEnum;
+
 struct GLcontext{
     GLuint GL_version_major;
     GLuint GL_version_minor;
@@ -43,8 +48,8 @@ struct shader{
 	const char *path;
     const char *src;
     GLuint handler = 0;
-    std::vector<attribLocation> attribLocation;
-    std::vector<uniformLocation> uniformLocation;
+    std::vector<attribLocation> attribLoc;
+    std::vector<uniformLocation> uniformLoc;
     bool compileFlg;
     
 	shader(const GLuint init_ID, const char * init_label, const GLenum init_type, const char * init_path, const char * init_src) :
@@ -140,10 +145,10 @@ public:
 	ERRenum Texture_Store(GLuint init_ID, const void *srcData, GLint internalFormat, GLenum internaltype);
 
     ERRenum Shader_Create(GLuint init_ID, const char *init_label, GLenum init_type, const char * init_path);
-    ERRenum Shader_AddBindAttribLocation(GLuint ID,const attribLocation attrLoc);
+    ERRenum Shader_AddAttribLocation(GLuint ID, const char *loc_name, GLuint loc_index);
     ERRenum Program_Create(GLuint init_ID, const char *init_label);
 	ERRenum Program_AttachShader(GLuint programID, GLuint shaderID);
-	ERRenum Program_LinkShader(GLuint programID);
+	ERRenum Program_LinkShader(GLuint ID);
 
 	ERRenum Shader_AssociateAttribLocation(GLuint shaderID, const std::vector<attribLocation> &vec);
 	ERRenum Shader_AssociateUniformLocation(GLuint shaderID, const std::vector<uniformLocation> &vec);
@@ -271,7 +276,20 @@ ERRenum GLcommon::Program_AttachShader(GLuint programID, GLuint shaderID)
     return ERRCHK_SUCCESS;
 }
 
-
+ERRenum GLcommon::Program_LinkShader(GLuint ID){
+    GLuint index;
+    if(findID<program*>(ID, __func__, programvec, index) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+    
+    for(std::vector<shader*>::iterator i = programvec[index]->attachedShadervec.begin(); i != programvec[index]->attachedShadervec.end(); ++i)
+    {
+        for(std::vector<attribLocation>::iterator j = (*i)->attribLoc.begin(); j != (*i)->attribLoc.end(); ++j)
+        {
+            glBindAttribLocation(programvec[index]->handler, (*j).index, (*j).name);
+        }
+    }
+    
+    return ERRCHK_SUCCESS;
+}
 
 ERRenum GLcommon::Shader_Create(GLuint init_ID, const char *init_label, GLenum init_type, const char * init_path )
 {
@@ -321,12 +339,11 @@ ERRenum GLcommon::Shader_Create(GLuint init_ID, const char *init_label, GLenum i
     return ERRCHK_SUCCESS;
 }
 
-ERRenum GLcommon::Shader_AddBindAttribLocation(GLuint ID,const attribLocation attrLoc)
-{
+ERRenum GLcommon::Shader_AddAttribLocation(GLuint ID, const char *loc_name, GLuint loc_index){
     GLuint index;
     if(findID<shader*>(ID, __func__, shadervec, index) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
-    shadervec[index]->attribLocation.push_back(attrLoc);
-    
+    attribLocation attrLoc = {loc_index,(char *)loc_name};
+    shadervec[index]->attribLoc.push_back(attrLoc);
     return ERRCHK_SUCCESS;
 }
 
