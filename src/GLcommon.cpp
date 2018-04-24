@@ -60,7 +60,7 @@ struct program{
     const GLuint ID;
     const char *label;
     GLuint handler = 0;
-    std::vector<GLuint> attachedShaderIDvec;
+    std::vector<shader*> attachedShadervec;
     bool linkFlg;
     
     program(const GLuint init_ID,const char *init_label) :
@@ -245,25 +245,33 @@ ERRenum GLcommon::Program_Create(GLuint init_ID, const char *init_label) {
 	return ERRCHK_SUCCESS;
 }
 
+
 ERRenum GLcommon::Program_AttachShader(GLuint programID, GLuint shaderID)
 {
     GLuint programindex,shaderindex;
+    bool conflict_flg;
     if(findID<program*>(programID, __func__, programvec, programindex) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
     if(findID<shader*>(shaderID,__func__,shadervec,shaderindex) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
     
-    std::vector<GLuint>::iterator k = programvec[programindex]->attachedShaderIDvec.begin();
+    std::vector<shader*>::iterator k = (programvec[programindex]->attachedShadervec).begin();
     
-    while(k != programvec[programindex]->attachedShaderIDvec.end()){
-        ++k;
+    while(k != (programvec[programindex]->attachedShadervec).end() && (*k)->type != shadervec[shaderindex]->type) ++k;
+    if(k != (programvec[programindex]->attachedShadervec).end()) {
+        printf("WARNING (%s) : Collision of shader type detected. Detaching operation is being excuted.\n",__func__);
+        
+        glDetachShader(programvec[programindex]->handler, (*k)->handler);
+        
+        (programvec[programindex]->attachedShadervec).erase(k);
     }
     
-    
-    programvec[programindex]->attachedShaderIDvec.push_back(shadervec[shaderindex]->ID);
+    (programvec[programindex]->attachedShadervec).push_back(shadervec[shaderindex]);
     
     glAttachShader(programvec[programindex]->handler, shadervec[shaderindex]->handler);
     
     return ERRCHK_SUCCESS;
 }
+
+
 
 ERRenum GLcommon::Shader_Create(GLuint init_ID, const char *init_label, GLenum init_type, const char * init_path )
 {
