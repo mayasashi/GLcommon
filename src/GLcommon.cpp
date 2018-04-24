@@ -9,172 +9,6 @@
 #include "GLcommon_includes.h"
 #include "GLcommon_format.h"
 
-typedef enum{
-    ERRCHK_SUCCESS,
-    ERRCHK_SUSPEND,
-    ERRCHK_UNKNOWN
-}ERRenum;
-
-typedef enum{
-    ATTRIB_LOCATION,
-    UNIFORM_LOCATION
-}LocationEnum;
-
-struct GLcontext{
-    GLuint GL_version_major;
-    GLuint GL_version_minor;
-    bool ForwardCompatFlg;
-    bool CoreProfileFlg;
-};
-
-struct windowInfo{
-    GLuint width;
-    GLuint height;
-    char *title;
-    GLcontext context;
-};
-
-struct attribLocation{
-    GLuint index;
-    char *name;
-};
-
-using uniformLocation = attribLocation;
-
-struct shader{
-    const GLuint ID;
-    const char *label;
-    const GLenum type;
-	const char *path;
-    const char *src;
-    GLuint handler = 0;
-    std::vector<attribLocation> attribLoc;
-    std::vector<uniformLocation> uniformLoc;
-    bool compileFlg;
-    
-	shader(const GLuint init_ID, const char * init_label, const GLenum init_type, const char * init_path, const char * init_src) :
-		ID(init_ID),
-		label(init_label),
-		type(init_type),
-		path(init_path),
-		src(init_src)
-    {}
-};
-
-struct program{
-    const GLuint ID;
-    const char *label;
-    GLuint handler = 0;
-    std::vector<shader*> attachedShadervec;
-    bool linkFlg;
-    
-    program(const GLuint init_ID,const char *init_label) :
-        ID(init_ID),
-        label(init_label)
-    {}
-};
-
-struct tex{
-    const GLuint ID;
-    const char *label;
-	const GLuint width;
-	const GLuint height;
-    GLuint handler = 0;
-    void *srcDataPtr;
-    bool minflg;
-    bool magflg;
-    GLint internalformat;
-    GLenum internaltype;
-    
-    tex(GLuint init_ID,const char *init_label, GLuint init_width, GLuint init_height) :
-		ID(init_ID) , 
-		label(init_label) , 
-		width(init_width), 
-		height(init_height) 
-	{}
-};
-
-struct vertexAttribArray
-{
-	GLuint vbo_ID;
-	GLuint program_ID;
-};
-
-struct vbo
-{
-    const GLuint ID;
-    const char *label;
-    GLuint handler = 0;
-    const void *src_data;
-    GLuint vertex_dim;
-    GLuint vertex_total;
-    GLenum type;
-    GLenum usage;
-    GLboolean normalized;
-    GLsizei stride;
-    
-    vbo(GLuint init_ID, const char *init_label) :
-    ID(init_ID),
-    label(init_label)
-    {}
-    
-};
-
-struct vao
-{
-    const GLuint ID;
-    const char *label;
-    GLuint handler = 0;
-    std::vector<vbo*> vbo_container;
-    std::vector<vertexAttribArray> vertexAttribArray_container;
-    vao(GLuint init_ID, const char *init_label) :
-    ID(init_ID),
-    label(init_label)
-    {}
-};
-
-class GLcommon {
-    
-public:
-    GLcommon();
-    ~GLcommon();
-
-    void createWindow(int width,int height);
-
-	ERRenum Texture_Create(GLuint init_ID, const char *init_label, int width, int height);
-	ERRenum Texture_Store(GLuint init_ID, const void *srcData, GLint internalFormat, GLenum internaltype);
-
-    ERRenum Shader_Create(GLuint init_ID, const char *init_label, GLenum init_type, const char * init_path);
-    ERRenum Shader_AddAttribLocation(GLuint ID, const char *loc_name, GLuint loc_index);
-    ERRenum Program_Create(GLuint init_ID, const char *init_label);
-	ERRenum Program_AttachShader(GLuint programID, GLuint shaderID);
-	ERRenum Program_LinkShader(GLuint ID);
-
-	ERRenum Shader_AssociateAttribLocation(GLuint shaderID, const std::vector<attribLocation> &vec);
-	ERRenum Shader_AssociateUniformLocation(GLuint shaderID, const std::vector<uniformLocation> &vec);
-
-    ERRenum VAO_Create(GLuint init_ID, const char * init_label);
-    ERRenum VAO_VertexAttribArray_Register(GLuint vbo_ID, GLuint program_ID);
-
-    ERRenum VBO_Create(GLuint init_ID, const char *init_label);
-	ERRenum VBO_StoreEmpty(GLuint ID, GLsizei size);
-	ERRenum VBO_StoreData(GLuint ID, GLuint vertex_dim, GLuint vertex_total, GLenum type, GLenum usage, GLboolean normalized, GLsizei stride, const void *src_data);
-
-    void flush();
-    
-private:
-	template <typename T> ERRenum checkID(GLuint ID, const char *func_name, const std::vector<T>& vec);
-	template <typename T> ERRenum findID(GLuint ID, const char *func_name, const std::vector<T>& vec, GLuint &index);
-	template <typename T> ERRenum checklabel(const char *label, const char *func_name, const std::vector<T>& vec);
-    GLFWwindow *window;
-    std::vector<tex*> texturevec;
-    std::vector<shader*> shadervec;
-    std::vector<program*> programvec;
-	std::vector<vbo*> vbovec;
-    std::vector<vao*> vaovec;
-    
-};
-
 GLcommon::GLcommon(){
     if(!glfwInit()){
         std::cout << "failed to initialize glfw environment." << std::endl;
@@ -237,13 +71,42 @@ ERRenum GLcommon::checklabel(const char *label, const char *func_name, const std
 	return ERRCHK_SUCCESS;
 }
 
+ERRenum GLcommon::createWindowandMakeContext(int width, int height)
+{
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+	window = glfwCreateWindow(width, height, "TITLE", NULL, NULL);
+	if (window == NULL) {
+		printf("SUSPENDED (%s) : failed to create window.\n", __func__);
+		return ERRCHK_SUSPEND;
+	}
+
+	glfwMakeContextCurrent(window);
+
+#ifdef PLATFORM_WIN
+	glewExperimental = GL_TRUE;
+	GLenum err = glewInit();
+	if (err != GLEW_OK) {
+		printf("SUSPENDED (%s) : failed to initialize glew.\n", __func__);
+		return ERRCHK_SUSPEND;
+	}
+#endif
+
+	return ERRCHK_SUCCESS;
+}
+
 ERRenum GLcommon::Program_Create(GLuint init_ID, const char *init_label) {
 
 	if (checkID<program*>(init_ID, __func__, programvec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
 	if (checklabel<program*>(init_label, __func__, programvec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
 
 	program *pr = new program(init_ID, init_label);
+	pr->linkFlg = false;
 	programvec.push_back(pr);
+
 
 	pr->handler = glCreateProgram();
 
@@ -287,8 +150,41 @@ ERRenum GLcommon::Program_LinkShader(GLuint ID){
             glBindAttribLocation(programvec[index]->handler, (*j).index, (*j).name);
         }
     }
+
+	glLinkProgram(programvec[index]->handler);
+
+	GLint link_status;
+
+	glGetProgramiv(programvec[index]->handler, GL_LINK_STATUS, &link_status);
+
+	if (link_status == GL_TRUE) {
+		printf("INFO (%s) : Succeeded to link program.\n", __func__);
+		programvec[index]->linkFlg = true;
+		return ERRCHK_SUCCESS;
+	}
+	else {
+
+		printf("SUSPENDED (%s) : Failed to link program. Log detail is provided below. \n", __func__);
+
+		GLint infologlength;
+		glGetProgramiv(programvec[index]->handler, GL_INFO_LOG_LENGTH, &infologlength);
+
+		if (infologlength > 1)
+		{
+			printf("-----------------------------------------------------------------\n");
+			GLchar *log = (GLchar*)malloc(infologlength);
+			
+			glGetProgramInfoLog(programvec[index]->handler, infologlength, NULL, log);
+
+			printf("%s\n", log);
+			printf("-----------------------------------------------------------------\n");
+			free(log);
+		}
+
+		return ERRCHK_SUSPEND;
+	}
     
-    return ERRCHK_SUCCESS;
+    
 }
 
 ERRenum GLcommon::Shader_Create(GLuint init_ID, const char *init_label, GLenum init_type, const char * init_path )
@@ -315,6 +211,7 @@ ERRenum GLcommon::Shader_Create(GLuint init_ID, const char *init_label, GLenum i
 
 
 	shader *sh = new shader(init_ID, init_label, init_type, init_path, src);
+	sh->compileFlg = false;
 	shadervec.push_back(sh);
 
 	sh->handler = glCreateShader(sh->type);
@@ -324,19 +221,35 @@ ERRenum GLcommon::Shader_Create(GLuint init_ID, const char *init_label, GLenum i
 	glCompileShader(sh->handler);
 
 	GLint checkCompileStatus;
-	GLint shaderInfoLogLength;
 	glGetShaderiv(sh->handler, GL_COMPILE_STATUS, &checkCompileStatus);
-	glGetShaderiv(sh->handler, GL_INFO_LOG_LENGTH, &shaderInfoLogLength);
-	if (shaderInfoLogLength > 1) {
-		GLchar *shaderCompileLog = (GLchar *)malloc(shaderInfoLogLength);
-		glGetShaderInfoLog(sh->handler, shaderInfoLogLength, NULL, shaderCompileLog);
-        
-        printf("%s\n",shaderCompileLog);
-        
-		free(shaderCompileLog);
+	if (checkCompileStatus == GL_TRUE) {
+		printf("INFO (%s) : Succeeded to compile shader.\n", __func__);
+		sh->compileFlg = true;
+		return ERRCHK_SUCCESS;
+	}
+	else {
+
+		printf("SUSPENDED (%s) : Failed to compile shader. Log detail is provided below. \n", __func__);
+
+		GLint shaderInfoLogLength;
+		glGetShaderiv(sh->handler, GL_INFO_LOG_LENGTH, &shaderInfoLogLength);
+		if (shaderInfoLogLength > 1) {
+
+			printf("-----------------------------------------------------------------\n");
+
+			GLchar *shaderCompileLog = (GLchar *)malloc(shaderInfoLogLength);
+			glGetShaderInfoLog(sh->handler, shaderInfoLogLength, NULL, shaderCompileLog);
+
+			printf("%s\n", shaderCompileLog);
+
+			printf("-----------------------------------------------------------------\n");
+
+			free(shaderCompileLog);
+		}
+		return ERRCHK_SUSPEND;
 	}
     
-    return ERRCHK_SUCCESS;
+    
 }
 
 ERRenum GLcommon::Shader_AddAttribLocation(GLuint ID, const char *loc_name, GLuint loc_index){
@@ -410,9 +323,38 @@ ERRenum GLcommon::VAO_Create(GLuint init_ID, const char * init_label)
     if(newvao->handler == 0)
     {
         printf("SUSPENDED (%s) : failed to initalize vao.\n", __func__);
+		return ERRCHK_SUSPEND;
     }
     
     return ERRCHK_SUCCESS;
+}
+ERRenum GLcommon::VAO_VertexAttribArray_Register(GLuint vao_ID, GLuint vbo_ID, GLuint shader_ID, GLuint location)
+{
+	GLuint vaoIndex, vboIndex, shaderIndex, shaderAttribLocIndex;
+	if (findID<vao*>(vao_ID, __func__, vaovec, vaoIndex) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+	if (findID<vbo*>(vbo_ID, __func__, vbovec, vboIndex) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+	if (findID<shader*>(shader_ID, __func__, shadervec, shaderIndex) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+	
+	std::vector<attribLocation>::iterator i = shadervec[shaderIndex]->attribLoc.begin();
+	while (i != shadervec[shaderIndex]->attribLoc.end() && (*i).index != location) ++i;
+	if (i == shadervec[shaderIndex]->attribLoc.end()) {
+		printf("SUSPENDED (%s) : Invalid attribute location.\n", __func__);
+		return ERRCHK_SUSPEND;
+	}
+	
+	printf("NOTE (%s) : Registering location %d (%s) [vao label : %s, vbo label : %s]", __func__, location, (*i).name, vaovec[vaoIndex]->label, vbovec[vboIndex]->label);
+
+
+	glBindVertexArray(vaovec[vaoIndex]->handler);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbovec[vboIndex]->handler);
+
+	glEnableVertexAttribArray(location);
+	glVertexAttribPointer(location, vbovec[vboIndex]->vertex_dim, vbovec[vboIndex]->type, vbovec[vboIndex]->normalized, vbovec[vboIndex]->stride, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindVertexArray(0);
 }
 
 ERRenum GLcommon::VBO_Create(GLuint init_ID, const char *init_label)
@@ -461,5 +403,16 @@ ERRenum GLcommon::VBO_StoreData(GLuint ID, GLuint vertex_dim, GLuint vertex_tota
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     
 	return ERRCHK_SUCCESS;
+}
+
+void GLcommon::flush()
+{
+	glfwSwapBuffers(window);
+	glfwWaitEvents();
+}
+
+bool GLcommon::closeflg()
+{
+	return glfwWindowShouldClose(window) == GL_FALSE;
 }
 
