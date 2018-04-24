@@ -6,15 +6,20 @@
 //  Copyright © 2018年 mayasashi. All rights reserved.
 //
 
-#include <iostream>
+#include "GLcommon_includes.h"
 
 int main(int argc, const char * argv[]) {
-	const int *a;
-	int b = 10;
-	a = &b;
-	printf("%d\n", *a);
-	*(&b) = 20;
-	printf("%d\n", *a);
+	
+	GLcommon * com = new GLcommon();
+
+	com->createWindowandMakeContext(640, 480);
+
+	do {
+		glClearColor(1.0f, 1.0f, 0.5f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		com->flush();
+	} while (com->closeflg());
 
     return 0;
 }
