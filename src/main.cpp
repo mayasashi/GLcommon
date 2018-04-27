@@ -13,6 +13,12 @@ int main(int argc, const char * argv[]) {
 	GLcommon * com = new GLcommon();
     
 	com->createWindowandMakeContext(128, 128);
+    
+    com->VBO_Create(34, "fd");
+    com->VBO_StoreEmpty(34, sizeof(int), GL_STATIC_DRAW);
+    
+    com->VBO_Create(35, "fs");
+    com->VBO_StoreEmpty(35, sizeof(int), GL_STATIC_DRAW);
 
     com->Draw([](){
         glClearColor(0.2f, 0.3f, 0.5f, 1.0f);

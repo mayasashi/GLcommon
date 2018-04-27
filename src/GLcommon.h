@@ -11,10 +11,12 @@
 
 #include "GLcommon_includes.h"
 
+
 typedef enum {
     ERRCHK_SUCCESS,
     ERRCHK_SUSPEND,
     ERRCHK_CONTEXT_ABORT,
+    ERRCHK_SKIP,
     ERRCHK_UNKNOWN
 }ERRenum;
 
@@ -113,7 +115,12 @@ struct vbo
     vbo(GLuint init_ID, const char *init_label) :
     ID(init_ID),
     label(init_label)
-    {}
+    {
+        src_data = NULL;
+        vertex_dim = 0;
+        vertex_total = 0;
+        normalized = GL_FALSE;
+    }
     
 };
 
@@ -164,13 +171,12 @@ public:
     ERRenum VAO_USE(GLuint ID, std::function<ERRenum(void)> fn);   //No Implementation
     
     ERRenum VBO_Create(GLuint init_ID, const char *init_label);
-    ERRenum VBO_StoreEmpty(GLuint ID, GLsizei size);  //No implementation
+    ERRenum VBO_StoreEmpty(GLuint ID, GLsizei bytesize, GLenum usage);
     ERRenum VBO_StoreData(GLuint ID, GLuint vertex_dim, GLuint vertex_total, GLenum type, GLenum usage, GLboolean normalized, GLsizei stride, const void *src_data);
-    ERRenum vbo_SwapData(GLuint ID, const void *data);  //No implementation
+    ERRenum VBO_SwapData(GLuint ID, const void *data);  //No implementation
     
     
     ERRenum Draw(std::function<void(void)> fn);
-    
     void flush();
     bool closeflg();
     
@@ -178,6 +184,7 @@ private:
     template <typename T> ERRenum checkID(GLuint ID, const char *func_name, const std::vector<T>& vec);
     template <typename T> ERRenum findID(GLuint ID, const char *func_name, const std::vector<T>& vec, GLuint &index);
     template <typename T> ERRenum checklabel(const char *label, const char *func_name, const std::vector<T>& vec);
+    ERRenum ERR(ERRenum err);
     bool checkContextFlg(const char *funcname);
     GLFWwindow *window;
     std::vector<tex*> texturevec;
@@ -186,6 +193,7 @@ private:
     std::vector<vbo*> vbovec;
     std::vector<vao*> vaovec;
     bool contextFlg;
+    bool errchk;
 };
 
 
