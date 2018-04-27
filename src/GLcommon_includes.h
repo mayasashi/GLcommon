@@ -1,7 +1,7 @@
 #ifndef GLCOMMON_INCLUDES
 #define GLCOMMON_INCLUDES
 
-#define PLATFORM_MAC
+#define PLATFORM_WIN
 
 #include <iostream>
 #include <vector>
@@ -9,6 +9,7 @@
 #include <fstream>
 
 #ifdef PLATFORM_WIN
+#include <functional>
 #define GLEW_STATIC
 #include <gl/glew.h>
 #else
