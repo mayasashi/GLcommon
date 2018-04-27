@@ -105,6 +105,7 @@ struct vbo
     const char *label;
     GLuint handler = 0;
     const void *src_data;
+	GLsizei bytesize;
     GLuint vertex_dim;
     GLuint vertex_total;
     GLenum type;
@@ -151,9 +152,9 @@ public:
     GLcommon();
     ~GLcommon();
     
-    ERRenum createWindowandMakeContext(int width, int height);
+    ERRenum createWindowandMakeContext(unsigned short width, unsigned short height);
     
-    ERRenum Texture_Create(GLuint init_ID, const char *init_label, int width, int height);
+    ERRenum Texture_Create(GLuint init_ID, const char *init_label, unsigned short width, unsigned short height);
     ERRenum Texture_Store(GLuint init_ID, const void *srcData, GLint internalFormat, GLenum internaltype);
     ERRenum Texture_SetOption(GLuint ID, GLuint MinFlg, GLuint MagFlg);   //No implementation
     ERRenum Texture_Register(GLuint textureID, GLuint shaderID, GLuint index);   //No implementation
@@ -164,15 +165,19 @@ public:
     ERRenum Program_Create(GLuint init_ID, const char *init_label);
     ERRenum Program_AttachShader(GLuint programID, GLuint shaderID);
     ERRenum Program_LinkShader(GLuint ID);
-    ERRenum Program_USE(GLuint ID,std::function<void(void)> fn);   //No implementation
+    ERRenum Program_USE(GLuint ID,std::function<void(void)> fn);
+	ERRenum Program_USE(GLuint ID);
+	ERRenum Program_Unbind();
     
     ERRenum VAO_Create(GLuint init_ID, const char * init_label);
     ERRenum VAO_VertexAttribArray_Register(GLuint vao_ID, GLuint vbo_ID, GLuint shader_ID, GLuint location);
-    ERRenum VAO_USE(GLuint ID, std::function<ERRenum(void)> fn);   //No Implementation
+    ERRenum VAO_USE(GLuint ID, std::function<void(void)> fn);
+	ERRenum VAO_USE(GLuint ID);
+	ERRenum VAO_Unbind();
     
     ERRenum VBO_Create(GLuint init_ID, const char *init_label);
     ERRenum VBO_StoreEmpty(GLuint ID, GLsizei bytesize, GLenum usage);
-    ERRenum VBO_StoreData(GLuint ID, GLuint vertex_dim, GLuint vertex_total, GLenum type, GLenum usage, GLboolean normalized, GLsizei stride, const void *src_data);
+    ERRenum VBO_StoreData(GLuint ID, GLuint vertex_dim, GLuint vertex_total, GLenum type, GLenum usage, GLboolean normalized, GLsizei stride, GLsizei bytesize, const void *src_data);
     ERRenum VBO_SwapData(GLuint ID, const void *data);  //No implementation
     
     
@@ -184,7 +189,7 @@ private:
     template <typename T> ERRenum checkID(GLuint ID, const char *func_name, const std::vector<T>& vec);
     template <typename T> ERRenum findID(GLuint ID, const char *func_name, const std::vector<T>& vec, GLuint &index);
     template <typename T> ERRenum checklabel(const char *label, const char *func_name, const std::vector<T>& vec);
-    ERRenum ERR(ERRenum err);
+    ERRenum EXIT(ERRenum err);
     bool checkContextFlg(const char *funcname);
     GLFWwindow *window;
     std::vector<tex*> texturevec;
