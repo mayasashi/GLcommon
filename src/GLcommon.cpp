@@ -6,13 +6,20 @@
 //  Copyright © 2018年 mayasashi. All rights reserved.
 //
 
-#include "GLcommon_includes.h"
+#include "GLcommon.h"
 #include "GLcommon_format.h"
+
+#define ERRCHECK() \
+    if(!errchk) return ERR(ERRCHK_SKIP); \
+    if(!checkContextFlg(__func__)) return ERR(ERRCHK_CONTEXT_ABORT);
 
 GLcommon::GLcommon(){
     if(!glfwInit()){
         std::cout << "failed to initialize glfw environment." << std::endl;
+        
     }
+    errchk = true;
+    contextFlg = false;
 }
 
 GLcommon::~GLcommon(){
@@ -28,9 +35,10 @@ ERRenum GLcommon::checkID(GLuint ID, const char *func_name, const std::vector<T>
 	}
 	if (conflict_flg) {
 		printf("SUSPENDED (%s): excisting ID specified.\n",func_name);
-		return ERRCHK_SUSPEND;
+        
+		return ERR(ERRCHK_SUSPEND);
 	}
-	return ERRCHK_SUCCESS;
+	return ERR(ERRCHK_SUCCESS);
 }
 
 template <typename T> ERRenum GLcommon::findID(GLuint ID, const char *func_name, const std::vector<T>& vec, GLuint &index)
@@ -41,12 +49,13 @@ template <typename T> ERRenum GLcommon::findID(GLuint ID, const char *func_name,
         ++itr;
         ++count;
     }
-    if(itr == vec.end() && (*itr)->ID == ID){
+    if(itr != vec.end() && (*itr)->ID == ID){
         index = count;
-        return ERRCHK_SUCCESS;
+        return ERR(ERRCHK_SUCCESS);
     }else{
         printf("SUSPENDED (%s) : ID not found.\n",func_name);
-        return ERRCHK_SUSPEND;
+        
+        return ERR(ERRCHK_SUSPEND);
     }
 	
 }
@@ -56,7 +65,8 @@ ERRenum GLcommon::checklabel(const char *label, const char *func_name, const std
 
 	if (strcmp(label, "") == 0 || label == nullptr) {
 		printf("SUSPENDED (%s) : label is empty.\n",func_name);
-		return ERRCHK_SUSPEND;
+        
+		return ERR(ERRCHK_SUSPEND);
 	}
 	bool conflict_flg = false;
 	for (typename std::vector<T>::const_iterator itr = vec.begin(); itr != vec.end(); ++itr)
@@ -65,23 +75,27 @@ ERRenum GLcommon::checklabel(const char *label, const char *func_name, const std
 	}
 	if (conflict_flg) {
 		printf("SUSPENDED (%s): excisting label specified.\n", func_name);
-		return ERRCHK_SUSPEND;
+        
+		return ERR(ERRCHK_SUSPEND);
 	}
 
-	return ERRCHK_SUCCESS;
+	return ERR(ERRCHK_SUCCESS);
 }
 
 ERRenum GLcommon::createWindowandMakeContext(int width, int height)
 {
+    if(!errchk) return ERR(ERRCHK_SKIP);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	
 
 	window = glfwCreateWindow(width, height, "TITLE", NULL, NULL);
 	if (window == NULL) {
 		printf("SUSPENDED (%s) : failed to create window.\n", __func__);
-		return ERRCHK_SUSPEND;
+        
+		return ERR(ERRCHK_SUSPEND);
 	}
 
 	glfwMakeContextCurrent(window);
@@ -91,17 +105,23 @@ ERRenum GLcommon::createWindowandMakeContext(int width, int height)
 	GLenum err = glewInit();
 	if (err != GLEW_OK) {
 		printf("SUSPENDED (%s) : failed to initialize glew.\n", __func__);
-		return ERRCHK_SUSPEND;
+        
+		return ERR(ERRCHK_SUSPEND);
 	}
 #endif
+    
+    contextFlg = true;
 
-	return ERRCHK_SUCCESS;
+	return ERR(ERRCHK_SUCCESS);
 }
 
 ERRenum GLcommon::Program_Create(GLuint init_ID, const char *init_label) {
+    
+    if(!errchk) return ERR(ERRCHK_SKIP);
+    if(!checkContextFlg(__func__))return ERR(ERRCHK_CONTEXT_ABORT);
 
-	if (checkID<program*>(init_ID, __func__, programvec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
-	if (checklabel<program*>(init_label, __func__, programvec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+	if (checkID<program*>(init_ID, __func__, programvec) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
+	if (checklabel<program*>(init_label, __func__, programvec) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
 
 	program *pr = new program(init_ID, init_label);
 	pr->linkFlg = false;
@@ -110,16 +130,19 @@ ERRenum GLcommon::Program_Create(GLuint init_ID, const char *init_label) {
 
 	pr->handler = glCreateProgram();
 
-	return ERRCHK_SUCCESS;
+	return ERR(ERRCHK_SUCCESS);
 }
 
 
 ERRenum GLcommon::Program_AttachShader(GLuint programID, GLuint shaderID)
 {
+    if(!errchk) return ERR(ERRCHK_SKIP);
+    if(!checkContextFlg(__func__))return ERR(ERRCHK_CONTEXT_ABORT);
+    
     GLuint programindex,shaderindex;
     bool conflict_flg;
-    if(findID<program*>(programID, __func__, programvec, programindex) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
-    if(findID<shader*>(shaderID,__func__,shadervec,shaderindex) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+    if(findID<program*>(programID, __func__, programvec, programindex) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
+    if(findID<shader*>(shaderID,__func__,shadervec,shaderindex) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
     
     std::vector<shader*>::iterator k = (programvec[programindex]->attachedShadervec).begin();
     
@@ -136,12 +159,16 @@ ERRenum GLcommon::Program_AttachShader(GLuint programID, GLuint shaderID)
     
     glAttachShader(programvec[programindex]->handler, shadervec[shaderindex]->handler);
     
-    return ERRCHK_SUCCESS;
+    return ERR(ERRCHK_SUCCESS);
 }
 
 ERRenum GLcommon::Program_LinkShader(GLuint ID){
+    
+    if(!errchk) return ERR(ERRCHK_SKIP);
+    if(!checkContextFlg(__func__))return ERR(ERRCHK_CONTEXT_ABORT);
+    
     GLuint index;
-    if(findID<program*>(ID, __func__, programvec, index) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+    if(findID<program*>(ID, __func__, programvec, index) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
     
     for(std::vector<shader*>::iterator i = programvec[index]->attachedShadervec.begin(); i != programvec[index]->attachedShadervec.end(); ++i)
     {
@@ -160,7 +187,7 @@ ERRenum GLcommon::Program_LinkShader(GLuint ID){
 	if (link_status == GL_TRUE) {
 		printf("INFO (%s) : Succeeded to link program.\n", __func__);
 		programvec[index]->linkFlg = true;
-		return ERRCHK_SUCCESS;
+		return ERR(ERRCHK_SUCCESS);
 	}
 	else {
 
@@ -180,8 +207,8 @@ ERRenum GLcommon::Program_LinkShader(GLuint ID){
 			printf("-----------------------------------------------------------------\n");
 			free(log);
 		}
-
-		return ERRCHK_SUSPEND;
+        
+		return ERR(ERRCHK_SUSPEND);
 	}
     
     
@@ -189,15 +216,19 @@ ERRenum GLcommon::Program_LinkShader(GLuint ID){
 
 ERRenum GLcommon::Shader_Create(GLuint init_ID, const char *init_label, GLenum init_type, const char * init_path )
 {
-	if (checkID<shader*>(init_ID, __func__, shadervec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
-	if (checklabel<shader*>(init_label, __func__, shadervec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+    if(!errchk) return ERR(ERRCHK_SKIP);
+    if(!checkContextFlg(__func__))return ERR(ERRCHK_CONTEXT_ABORT);
+    
+	if (checkID<shader*>(init_ID, __func__, shadervec) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
+	if (checklabel<shader*>(init_label, __func__, shadervec) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
 
 	std::ifstream file;
 
 	file.open(init_path);
 	if (file.fail()) {
 		printf("SUSPENDED [%s] , (%s) : shader source not found.\n", init_label ,__func__);
-		return ERRCHK_SUSPEND;
+        
+		return ERR(ERRCHK_SUSPEND);
 	}
 
 	std::string str_buffer = "";
@@ -225,7 +256,7 @@ ERRenum GLcommon::Shader_Create(GLuint init_ID, const char *init_label, GLenum i
 	if (checkCompileStatus == GL_TRUE) {
 		printf("INFO (%s) : Succeeded to compile shader.\n", __func__);
 		sh->compileFlg = true;
-		return ERRCHK_SUCCESS;
+		return ERR(ERRCHK_SUCCESS);
 	}
 	else {
 
@@ -246,24 +277,32 @@ ERRenum GLcommon::Shader_Create(GLuint init_ID, const char *init_label, GLenum i
 
 			free(shaderCompileLog);
 		}
-		return ERRCHK_SUSPEND;
+        
+		return ERR(ERRCHK_SUSPEND);
 	}
     
     
 }
 
 ERRenum GLcommon::Shader_AddAttribLocation(GLuint ID, const char *loc_name, GLuint loc_index){
+    
+    if(!errchk) return ERR(ERRCHK_SKIP);
+    if(!checkContextFlg(__func__))return ERR(ERRCHK_CONTEXT_ABORT);
+    
     GLuint index;
-    if(findID<shader*>(ID, __func__, shadervec, index) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+    if(findID<shader*>(ID, __func__, shadervec, index) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
     attribLocation attrLoc = {loc_index,(char *)loc_name};
     shadervec[index]->attribLoc.push_back(attrLoc);
-    return ERRCHK_SUCCESS;
+    return ERR(ERRCHK_SUCCESS);
 }
 
 ERRenum GLcommon::Texture_Create(GLuint init_ID, const char *init_label, int width, int height) {
+    
+    if(!errchk) return ERR(ERRCHK_SKIP);
+    if(!checkContextFlg(__func__))return ERR(ERRCHK_CONTEXT_ABORT);
 
-	if (checkID<tex*>(init_ID, __func__, texturevec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
-	if (checklabel<tex*>(init_label, __func__, texturevec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+	if (checkID<tex*>(init_ID, __func__, texturevec) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
+	if (checklabel<tex*>(init_label, __func__, texturevec) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
 
     tex* texture = new tex(init_ID,init_label,width,height);
 	texturevec.push_back(texture);
@@ -271,16 +310,20 @@ ERRenum GLcommon::Texture_Create(GLuint init_ID, const char *init_label, int wid
 	glGenTextures(1, &(texture->handler));
 
     
-    return ERRCHK_SUCCESS;
+    return ERR(ERRCHK_SUCCESS);
 }
 
 ERRenum GLcommon::Texture_Store(GLuint init_ID, const void *srcData, GLint internalformat, GLenum internaltype) {
+    
+    if(!errchk) return ERR(ERRCHK_SKIP);
+    if(!checkContextFlg(__func__))return ERR(ERRCHK_CONTEXT_ABORT);
     
     GLenum textureformat = CONVERT(internalformat);
     
     if(textureformat == 0){
         printf("SUSPENDED (%s) : Illegal texture internal format.\n", __func__);
-        return ERRCHK_SUSPEND;
+        
+        return ERR(ERRCHK_SUSPEND);
     }
     
 	std::vector<tex*>::iterator itr = texturevec.begin();
@@ -288,7 +331,8 @@ ERRenum GLcommon::Texture_Store(GLuint init_ID, const void *srcData, GLint inter
 		++itr;
 		if (itr == texturevec.end()) {
 			printf("SUSPENDED (%s) : Texture not registered.\n",__func__);
-			return ERRCHK_SUSPEND;
+            
+			return ERR(ERRCHK_SUSPEND);
 		}
 	}
 	
@@ -302,18 +346,22 @@ ERRenum GLcommon::Texture_Store(GLuint init_ID, const void *srcData, GLint inter
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	return ERRCHK_SUCCESS;
+	return ERR(ERRCHK_SUCCESS);
 }
 
 ERRenum GLcommon::VAO_Create(GLuint init_ID, const char * init_label)
 {
-    if (checkID<vao*>(init_ID, __func__, vaovec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
-    if (checklabel<vao*>(init_label, __func__, vaovec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+    if(!errchk) return ERR(ERRCHK_SKIP);
+    if(!checkContextFlg(__func__))return ERR(ERRCHK_CONTEXT_ABORT);
+    
+    if (checkID<vao*>(init_ID, __func__, vaovec) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
+    if (checklabel<vao*>(init_label, __func__, vaovec) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
     
     vao *newvao = new vao(init_ID,init_label);
     if(newvao == NULL){
         printf("SUSPENDED (%s) : failed to create vao object.\n", __func__);
-        return ERRCHK_SUSPEND;
+        
+        return ERR(ERRCHK_SUSPEND);
     }
     
     vaovec.push_back(newvao);
@@ -323,23 +371,28 @@ ERRenum GLcommon::VAO_Create(GLuint init_ID, const char * init_label)
     if(newvao->handler == 0)
     {
         printf("SUSPENDED (%s) : failed to initalize vao.\n", __func__);
-		return ERRCHK_SUSPEND;
+        
+		return ERR(ERRCHK_SUSPEND);
     }
     
-    return ERRCHK_SUCCESS;
+    return ERR(ERRCHK_SUCCESS);
 }
 ERRenum GLcommon::VAO_VertexAttribArray_Register(GLuint vao_ID, GLuint vbo_ID, GLuint shader_ID, GLuint location)
 {
+    if(!errchk) return ERR(ERRCHK_SKIP);
+    if(!checkContextFlg(__func__))return ERR(ERRCHK_CONTEXT_ABORT);
+    
 	GLuint vaoIndex, vboIndex, shaderIndex, shaderAttribLocIndex;
-	if (findID<vao*>(vao_ID, __func__, vaovec, vaoIndex) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
-	if (findID<vbo*>(vbo_ID, __func__, vbovec, vboIndex) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
-	if (findID<shader*>(shader_ID, __func__, shadervec, shaderIndex) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+	if (findID<vao*>(vao_ID, __func__, vaovec, vaoIndex) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
+	if (findID<vbo*>(vbo_ID, __func__, vbovec, vboIndex) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
+	if (findID<shader*>(shader_ID, __func__, shadervec, shaderIndex) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
 	
 	std::vector<attribLocation>::iterator i = shadervec[shaderIndex]->attribLoc.begin();
 	while (i != shadervec[shaderIndex]->attribLoc.end() && (*i).index != location) ++i;
 	if (i == shadervec[shaderIndex]->attribLoc.end()) {
 		printf("SUSPENDED (%s) : Invalid attribute location.\n", __func__);
-		return ERRCHK_SUSPEND;
+        
+		return ERR(ERRCHK_SUSPEND);
 	}
 	
 	printf("NOTE (%s) : Registering location %d (%s) [vao label : %s, vbo label : %s]", __func__, location, (*i).name, vaovec[vaoIndex]->label, vbovec[vboIndex]->label);
@@ -355,19 +408,26 @@ ERRenum GLcommon::VAO_VertexAttribArray_Register(GLuint vao_ID, GLuint vbo_ID, G
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glBindVertexArray(0);
+    
+    return ERR(ERRCHK_SUCCESS);
+    
 }
 
 ERRenum GLcommon::VBO_Create(GLuint init_ID, const char *init_label)
 {
-	if (checkID<vbo*>(init_ID, __func__, vbovec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
-	if (checklabel<vbo*>(init_label, __func__, vbovec) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+    if(!errchk) return ERR(ERRCHK_SKIP);
+    if(!checkContextFlg(__func__))return ERR(ERRCHK_CONTEXT_ABORT);
+    
+	if (checkID<vbo*>(init_ID, __func__, vbovec) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
+	if (checklabel<vbo*>(init_label, __func__, vbovec) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
     
 
 	vbo *newvbo = new vbo(init_ID, init_label);
 
 	if (newvbo == NULL) {
 		printf("SUSPENDED (%s) : failed to initialize vbo.\n", __func__);
-		return ERRCHK_SUSPEND;
+        
+		return ERR(ERRCHK_SUSPEND);
 	}
     
     vbovec.push_back(newvbo);
@@ -376,17 +436,32 @@ ERRenum GLcommon::VBO_Create(GLuint init_ID, const char *init_label)
 
 	if (newvbo->handler == 0) {
 		printf("SUSPENDED (%s) : failed to initialize vbo.\n", __func__);
-		return ERRCHK_SUSPEND;
+        
+		return ERR(ERRCHK_SUSPEND);
 	}
 
-	return ERRCHK_SUCCESS;
+	return ERR(ERRCHK_SUCCESS);
+}
+
+ERRenum GLcommon::VBO_StoreEmpty(GLuint ID, GLsizei bytesize, GLenum usage){
+    ERRCHECK();
+    GLuint index = 0;
+    if(findID<vbo*>(ID, __func__, vbovec, index) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
+    vbovec[index]->usage = usage;
+    glBindBuffer(GL_ARRAY_BUFFER, vbovec[index]->handler);
+    glBufferData(GL_ARRAY_BUFFER, bytesize, 0, usage);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    return ERR(ERRCHK_SUCCESS);
 }
 
 ERRenum GLcommon::VBO_StoreData(GLuint ID, GLuint vertex_dim, GLuint vertex_total, GLenum type, GLenum usage, GLboolean normalized, GLsizei stride, const void *src_data)
 {
+    if(!errchk) return ERR(ERRCHK_SKIP);
+    if(!checkContextFlg(__func__))return ERR(ERRCHK_CONTEXT_ABORT);
+    
     GLuint index = 0;
     
-    if(findID<vbo*>(ID, __func__, vbovec, index) != ERRCHK_SUCCESS) return ERRCHK_SUSPEND;
+    if(findID<vbo*>(ID, __func__, vbovec, index) != ERRCHK_SUCCESS) return ERR(ERRCHK_SUSPEND);
     
     vbovec[index]->vertex_dim = vertex_dim;
     vbovec[index]->vertex_total = vertex_total;
@@ -402,7 +477,32 @@ ERRenum GLcommon::VBO_StoreData(GLuint ID, GLuint vertex_dim, GLuint vertex_tota
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     
-	return ERRCHK_SUCCESS;
+	return ERR(ERRCHK_SUCCESS);
+}
+inline ERRenum GLcommon::ERR(ERRenum err){
+    if(err != ERRCHK_SUCCESS) errchk = false;
+    return err;
+}
+
+inline bool GLcommon::checkContextFlg(const char *funcname){
+    if(contextFlg) return true;
+    else{
+        printf("ABORT (%s) : Make sure createWindowandMakeContext(int,int) function is called before this function.\n",funcname);
+        
+        return false;
+    }
+}
+
+ERRenum GLcommon::Draw(std::function<void(void)> fn){
+    if(!errchk) return ERR(ERRCHK_SKIP);
+    if(!checkContextFlg(__func__)) return ERR(ERRCHK_CONTEXT_ABORT);
+    
+    do{
+        fn();
+        flush();
+    }while(glfwWindowShouldClose(window) == GL_FALSE);
+    
+    return ERR(ERRCHK_SUCCESS);
 }
 
 void GLcommon::flush()
