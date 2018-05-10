@@ -7,6 +7,7 @@
 //
 
 #include "GLcommon.h"
+#include <CL/cl.h>
 
 inline int print() {
 #ifdef PLATFORM_WIN
@@ -20,6 +21,16 @@ inline int print() {
 
 
 int main(int argc, const char * argv[]) {
+
+	cl_int err;
+	cl_uint platformNum;
+	err = clGetPlatformIDs(0, NULL, &platformNum);
+	if (err != CL_SUCCESS) {
+		printf("Error calling clGetPlatformIDs. Error code: %d\n", err);
+		return -1;
+	}
+	
+	printf("Detected OpenCL platforms: %d\n", platformNum);
 
 	enum GL_ID {
 		ID_NULL,
