@@ -18,6 +18,7 @@ GLcommon::GLcommon(){
         std::cout << "failed to initialize glfw environment." << std::endl;
         
     }
+	window = NULL;
     errchk = true;
     contextFlg = false;
 	drawCall = false;
@@ -179,6 +180,7 @@ ERRenum GLcommon::Program_LinkShader(GLuint ID){
     
     for(std::vector<shader*>::iterator i = programvec[index]->attachedShadervec.begin(); i != programvec[index]->attachedShadervec.end(); ++i)
     {
+		/*attribute location*/
         for(std::vector<attribLocation>::iterator j = (*i)->attribLoc.begin(); j != (*i)->attribLoc.end(); ++j)
         {
             glBindAttribLocation(programvec[index]->handler, (*j).index, (*j).name);
@@ -326,6 +328,15 @@ ERRenum GLcommon::Shader_AddAttribLocation(GLuint ID, const char *loc_name, GLui
     return EXIT(ERRCHK_SUCCESS);
 }
 
+ERRenum GLcommon::Shader_AddUniformLocation(GLuint ID, const char *loc_name, GLuint loc_index) {
+	ERRCHECK();
+	GLuint index;
+	if (findID<shader*>(ID, __func__, shadervec, index) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
+	uniformLocation uniLoc = { loc_index,(char *)loc_name };
+	shadervec[index]->uniformLoc.push_back(uniLoc);
+	return EXIT(ERRCHK_SUCCESS);
+}
+
 ERRenum GLcommon::Texture_Create(GLuint init_ID, const char *init_label, unsigned short width, unsigned short height) {
     
 	ERRCHECK();
@@ -386,16 +397,32 @@ ERRenum GLcommon::Texture_Store(GLuint init_ID, const void *srcData, GLint inter
 	return EXIT(ERRCHK_SUCCESS);
 }
 
-ERRenum GLcommon::Texture_Register(GLuint textureID, GLuint shaderID, GLuint index) {
+ERRenum GLcommon::Texture_Register(GLuint textureID, GLuint index) {
 	ERRCHECK();
 	GLuint texIndex;
-	if (index == 0 && !drawCall) printf("WARNING (%s) : Registering texture outside draw call while the current texture unit is set to default(0)", __func__);
+	if (index == 0 && !drawCall) printf("WARNING (%s) : Registering texture outside draw call while the current texture unit is set to default(0)\n", __func__);
 	if (findID<tex*>(textureID, __func__, texturevec, texIndex) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
 
 	glActiveTexture(GL_TEXTURE0 + index);
 	glBindTexture(GL_TEXTURE_2D, texturevec[texIndex]->handler);
 
 	glActiveTexture(GL_TEXTURE0);
+
+	return EXIT(ERRCHK_SUCCESS);
+}
+
+ERRenum GLcommon::Texture_Rewrite(GLuint textureID, const void *srcData)
+{
+	ERRCHECK();
+	GLuint texIndex;
+	if (findID<tex*>(textureID, __func__, texturevec, texIndex) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
+
+	glBindTexture(GL_TEXTURE_2D, texturevec[texIndex]->handler);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texturevec[texIndex]->width, texturevec[texIndex]->height, CONVERT(texturevec[texIndex]->internalformat), texturevec[texIndex]->internaltype, srcData);
+	
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	return EXIT(ERRCHK_SUCCESS);
 }
 
 ERRenum GLcommon::VAO_Create(GLuint init_ID, const char * init_label)
@@ -440,7 +467,7 @@ ERRenum GLcommon::VAO_VertexAttribArray_Register(GLuint vao_ID, GLuint vbo_ID, G
 		return EXIT(ERRCHK_SUSPEND);
 	}
 	
-	printf("NOTE (%s) : Registering location %d (%s) [vao label : %s, vbo label : %s]", __func__, location, (*i).name, vaovec[vaoIndex]->label, vbovec[vboIndex]->label);
+	printf("NOTE (%s) : Registering location %d (%s) [vao label : %s, vbo label : %s]\n", __func__, location, (*i).name, vaovec[vaoIndex]->label, vbovec[vboIndex]->label);
 
 
 	glBindVertexArray(vaovec[vaoIndex]->handler);
@@ -551,6 +578,25 @@ ERRenum GLcommon::VBO_StoreData(GLuint ID, GLuint vertex_dim, GLuint vertex_tota
     
 	return EXIT(ERRCHK_SUCCESS);
 }
+
+GLuint GLcommon::getProgram(GLuint ID)
+{
+	ERRCHECK();
+	GLuint index = 0;
+	if (findID<program*>(ID, __func__, programvec, index) != ERRCHK_SUCCESS) return 0;
+
+	return programvec[index]->handler;
+}
+GLuint GLcommon::getTexture(GLuint ID)
+{
+	ERRCHECK();
+	GLuint index = 0;
+	if (findID<tex*>(ID, __func__, texturevec, index) != ERRCHK_SUCCESS) return 0;
+
+	return texturevec[index]->handler;
+}
+
+
 inline ERRenum GLcommon::EXIT(ERRenum err){
     if(err != ERRCHK_SUCCESS) errchk = false;
     return err;
@@ -580,7 +626,7 @@ ERRenum GLcommon::Draw(std::function<void(void)> fn){
 void GLcommon::flush()
 {
 	glfwSwapBuffers(window);
-	glfwWaitEvents();
+	glfwPollEvents();
 }
 
 bool GLcommon::closeflg()

@@ -1,7 +1,7 @@
 #include "GLcommon_includes.h"
 
 
-GLenum CONVERT(GLint t) {
+static GLenum CONVERT(GLint t) {
 	switch (t)
 	{
 		case GL_R8:                return GL_RED;    break;

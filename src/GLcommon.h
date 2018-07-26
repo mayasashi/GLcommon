@@ -157,10 +157,12 @@ public:
     ERRenum Texture_Create(GLuint init_ID, const char *init_label, unsigned short width, unsigned short height);
     ERRenum Texture_Store(GLuint init_ID, const void *srcData, GLint internalFormat, GLenum internaltype, GLint MinFlg, GLint MagFlg);
     ERRenum Texture_SetOption(GLuint ID, GLuint MinFlg, GLuint MagFlg);   //No implementation
-    ERRenum Texture_Register(GLuint textureID, GLuint shaderID, GLuint index);
-    
+    ERRenum Texture_Register(GLuint textureID, GLuint index);
+	ERRenum Texture_Rewrite(GLuint textureID, const void *srcData);
+
     ERRenum Shader_Create(GLuint init_ID, const char *init_label, GLenum init_type, const char * init_path);
     ERRenum Shader_AddAttribLocation(GLuint ID, const char *loc_name, GLuint loc_index);
+	ERRenum Shader_AddUniformLocation(GLuint ID, const char *loc_name, GLuint loc_index);
     
     ERRenum Program_Create(GLuint init_ID, const char *init_label);
     ERRenum Program_AttachShader(GLuint programID, GLuint shaderID);
@@ -182,6 +184,10 @@ public:
     
     
     ERRenum Draw(std::function<void(void)> fn);
+
+	GLuint getProgram(GLuint ID);
+	GLuint getTexture(GLuint ID);
+
     void flush();
     bool closeflg();
     
