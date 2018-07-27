@@ -1,3 +1,3 @@
-# continuousDeformation
+# GLcommon
 
 Repository provided for personal use.
