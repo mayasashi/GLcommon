@@ -18,8 +18,10 @@ GLcommon::GLcommon(){
         std::cout << "failed to initialize glfw environment." << std::endl;
         
     }
+	window = NULL;
     errchk = true;
     contextFlg = false;
+	drawCall = false;
 }
 
 GLcommon::~GLcommon(){
@@ -84,6 +86,10 @@ ERRenum GLcommon::checklabel(const char *label, const char *func_name, const std
 
 ERRenum GLcommon::createWindowandMakeContext(unsigned short width, unsigned short height)
 {
+	if (drawCall) {
+		printf("SUSPENDED (%s) : Can't call the function during draw call.");
+		return EXIT(ERRCHK_SUSPEND);
+	}
     if(!errchk) return EXIT(ERRCHK_SKIP);
 	if (window != NULL) {
 		printf("SUSPENDED (%s) : GLFW window already exists.\n");
@@ -125,9 +131,7 @@ ERRenum GLcommon::createWindowandMakeContext(unsigned short width, unsigned shor
 
 ERRenum GLcommon::Program_Create(GLuint init_ID, const char *init_label) {
     
-    if(!errchk) return EXIT(ERRCHK_SKIP);
-    if(!checkContextFlg(__func__))return EXIT(ERRCHK_CONTEXT_ABORT);
-
+	ERRCHECK();
 	if (checkID<program*>(init_ID, __func__, programvec) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
 	if (checklabel<program*>(init_label, __func__, programvec) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
 
@@ -144,9 +148,7 @@ ERRenum GLcommon::Program_Create(GLuint init_ID, const char *init_label) {
 
 ERRenum GLcommon::Program_AttachShader(GLuint programID, GLuint shaderID)
 {
-    if(!errchk) return EXIT(ERRCHK_SKIP);
-    if(!checkContextFlg(__func__))return EXIT(ERRCHK_CONTEXT_ABORT);
-    
+	ERRCHECK();
     GLuint programindex,shaderindex;
     bool conflict_flg;
     if(findID<program*>(programID, __func__, programvec, programindex) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
@@ -172,14 +174,13 @@ ERRenum GLcommon::Program_AttachShader(GLuint programID, GLuint shaderID)
 
 ERRenum GLcommon::Program_LinkShader(GLuint ID){
     
-    if(!errchk) return EXIT(ERRCHK_SKIP);
-    if(!checkContextFlg(__func__))return EXIT(ERRCHK_CONTEXT_ABORT);
-    
+	ERRCHECK();
     GLuint index;
     if(findID<program*>(ID, __func__, programvec, index) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
     
     for(std::vector<shader*>::iterator i = programvec[index]->attachedShadervec.begin(); i != programvec[index]->attachedShadervec.end(); ++i)
     {
+		/*attribute location*/
         for(std::vector<attribLocation>::iterator j = (*i)->attribLoc.begin(); j != (*i)->attribLoc.end(); ++j)
         {
             glBindAttribLocation(programvec[index]->handler, (*j).index, (*j).name);
@@ -251,9 +252,7 @@ ERRenum GLcommon::Program_Unbind() {
 
 ERRenum GLcommon::Shader_Create(GLuint init_ID, const char *init_label, GLenum init_type, const char * init_path )
 {
-    if(!errchk) return EXIT(ERRCHK_SKIP);
-    if(!checkContextFlg(__func__))return EXIT(ERRCHK_CONTEXT_ABORT);
-    
+	ERRCHECK();
 	if (checkID<shader*>(init_ID, __func__, shadervec) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
 	if (checklabel<shader*>(init_label, __func__, shadervec) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
 
@@ -321,9 +320,7 @@ ERRenum GLcommon::Shader_Create(GLuint init_ID, const char *init_label, GLenum i
 
 ERRenum GLcommon::Shader_AddAttribLocation(GLuint ID, const char *loc_name, GLuint loc_index){
     
-    if(!errchk) return EXIT(ERRCHK_SKIP);
-    if(!checkContextFlg(__func__))return EXIT(ERRCHK_CONTEXT_ABORT);
-    
+	ERRCHECK();
     GLuint index;
     if(findID<shader*>(ID, __func__, shadervec, index) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
     attribLocation attrLoc = {loc_index,(char *)loc_name};
@@ -331,11 +328,18 @@ ERRenum GLcommon::Shader_AddAttribLocation(GLuint ID, const char *loc_name, GLui
     return EXIT(ERRCHK_SUCCESS);
 }
 
+ERRenum GLcommon::Shader_AddUniformLocation(GLuint ID, const char *loc_name, GLuint loc_index) {
+	ERRCHECK();
+	GLuint index;
+	if (findID<shader*>(ID, __func__, shadervec, index) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
+	uniformLocation uniLoc = { loc_index,(char *)loc_name };
+	shadervec[index]->uniformLoc.push_back(uniLoc);
+	return EXIT(ERRCHK_SUCCESS);
+}
+
 ERRenum GLcommon::Texture_Create(GLuint init_ID, const char *init_label, unsigned short width, unsigned short height) {
     
-    if(!errchk) return EXIT(ERRCHK_SKIP);
-    if(!checkContextFlg(__func__))return EXIT(ERRCHK_CONTEXT_ABORT);
-
+	ERRCHECK();
 	if (checkID<tex*>(init_ID, __func__, texturevec) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
 	if (checklabel<tex*>(init_label, __func__, texturevec) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
 
@@ -353,11 +357,9 @@ ERRenum GLcommon::Texture_Create(GLuint init_ID, const char *init_label, unsigne
     return EXIT(ERRCHK_SUCCESS);
 }
 
-ERRenum GLcommon::Texture_Store(GLuint init_ID, const void *srcData, GLint internalformat, GLenum internaltype) {
+ERRenum GLcommon::Texture_Store(GLuint init_ID, const void *srcData, GLint internalformat, GLenum internaltype, GLint MinFlg, GLint MagFlg) {
     
-    if(!errchk) return EXIT(ERRCHK_SKIP);
-    if(!checkContextFlg(__func__))return EXIT(ERRCHK_CONTEXT_ABORT);
-    
+	ERRCHECK();
     GLenum textureformat = CONVERT(internalformat);
     
     if(textureformat == 0){
@@ -376,14 +378,48 @@ ERRenum GLcommon::Texture_Store(GLuint init_ID, const void *srcData, GLint inter
 		}
 	}
 	
-	glBindTexture(GL_TEXTURE_2D, (*itr)->handler);
-
 	(*itr)->internalformat = internalformat;
 	(*itr)->internaltype = internaltype;
+	(*itr)->minflg = MinFlg;
+	(*itr)->magflg = MagFlg;
 
+	glBindTexture(GL_TEXTURE_2D, (*itr)->handler);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, MinFlg);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, MagFlg);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, (*itr)->width, (*itr)->height, 0, textureformat, internaltype, srcData);
 
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	return EXIT(ERRCHK_SUCCESS);
+}
+
+ERRenum GLcommon::Texture_Register(GLuint textureID, GLuint index) {
+	ERRCHECK();
+	GLuint texIndex;
+	if (index == 0 && !drawCall) printf("WARNING (%s) : Registering texture outside draw call while the current texture unit is set to default(0)\n", __func__);
+	if (findID<tex*>(textureID, __func__, texturevec, texIndex) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
+
+	glActiveTexture(GL_TEXTURE0 + index);
+	glBindTexture(GL_TEXTURE_2D, texturevec[texIndex]->handler);
+
+	glActiveTexture(GL_TEXTURE0);
+
+	return EXIT(ERRCHK_SUCCESS);
+}
+
+ERRenum GLcommon::Texture_Rewrite(GLuint textureID, const void *srcData)
+{
+	ERRCHECK();
+	GLuint texIndex;
+	if (findID<tex*>(textureID, __func__, texturevec, texIndex) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
+
+	glBindTexture(GL_TEXTURE_2D, texturevec[texIndex]->handler);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texturevec[texIndex]->width, texturevec[texIndex]->height, CONVERT(texturevec[texIndex]->internalformat), texturevec[texIndex]->internaltype, srcData);
+	
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	return EXIT(ERRCHK_SUCCESS);
@@ -391,9 +427,7 @@ ERRenum GLcommon::Texture_Store(GLuint init_ID, const void *srcData, GLint inter
 
 ERRenum GLcommon::VAO_Create(GLuint init_ID, const char * init_label)
 {
-    if(!errchk) return EXIT(ERRCHK_SKIP);
-    if(!checkContextFlg(__func__))return EXIT(ERRCHK_CONTEXT_ABORT);
-    
+	ERRCHECK();
     if (checkID<vao*>(init_ID, __func__, vaovec) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
     if (checklabel<vao*>(init_label, __func__, vaovec) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
     
@@ -419,9 +453,7 @@ ERRenum GLcommon::VAO_Create(GLuint init_ID, const char * init_label)
 }
 ERRenum GLcommon::VAO_VertexAttribArray_Register(GLuint vao_ID, GLuint vbo_ID, GLuint shader_ID, GLuint location)
 {
-    if(!errchk) return EXIT(ERRCHK_SKIP);
-    if(!checkContextFlg(__func__))return EXIT(ERRCHK_CONTEXT_ABORT);
-    
+	ERRCHECK();
 	GLuint vaoIndex, vboIndex, shaderIndex, shaderAttribLocIndex;
 	if (findID<vao*>(vao_ID, __func__, vaovec, vaoIndex) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
 	if (findID<vbo*>(vbo_ID, __func__, vbovec, vboIndex) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
@@ -435,7 +467,7 @@ ERRenum GLcommon::VAO_VertexAttribArray_Register(GLuint vao_ID, GLuint vbo_ID, G
 		return EXIT(ERRCHK_SUSPEND);
 	}
 	
-	printf("NOTE (%s) : Registering location %d (%s) [vao label : %s, vbo label : %s]", __func__, location, (*i).name, vaovec[vaoIndex]->label, vbovec[vboIndex]->label);
+	printf("NOTE (%s) : Registering location %d (%s) [vao label : %s, vbo label : %s]\n", __func__, location, (*i).name, vaovec[vaoIndex]->label, vbovec[vboIndex]->label);
 
 
 	glBindVertexArray(vaovec[vaoIndex]->handler);
@@ -484,9 +516,7 @@ ERRenum GLcommon::VAO_Unbind() {
 
 ERRenum GLcommon::VBO_Create(GLuint init_ID, const char *init_label)
 {
-    if(!errchk) return EXIT(ERRCHK_SKIP);
-    if(!checkContextFlg(__func__))return EXIT(ERRCHK_CONTEXT_ABORT);
-    
+	ERRCHECK();
 	if (checkID<vbo*>(init_ID, __func__, vbovec) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
 	if (checklabel<vbo*>(init_label, __func__, vbovec) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
     
@@ -526,9 +556,7 @@ ERRenum GLcommon::VBO_StoreEmpty(GLuint ID, GLsizei bytesize, GLenum usage){
 
 ERRenum GLcommon::VBO_StoreData(GLuint ID, GLuint vertex_dim, GLuint vertex_total, GLenum type, GLenum usage, GLboolean normalized, GLsizei stride, GLsizei bytesize, const void *src_data)
 {
-    if(!errchk) return EXIT(ERRCHK_SKIP);
-    if(!checkContextFlg(__func__))return EXIT(ERRCHK_CONTEXT_ABORT);
-    
+    ERRCHECK();
     GLuint index = 0;
     
     if(findID<vbo*>(ID, __func__, vbovec, index) != ERRCHK_SUCCESS) return EXIT(ERRCHK_SUSPEND);
@@ -550,6 +578,25 @@ ERRenum GLcommon::VBO_StoreData(GLuint ID, GLuint vertex_dim, GLuint vertex_tota
     
 	return EXIT(ERRCHK_SUCCESS);
 }
+
+GLuint GLcommon::getProgram(GLuint ID)
+{
+	ERRCHECK();
+	GLuint index = 0;
+	if (findID<program*>(ID, __func__, programvec, index) != ERRCHK_SUCCESS) return 0;
+
+	return programvec[index]->handler;
+}
+GLuint GLcommon::getTexture(GLuint ID)
+{
+	ERRCHECK();
+	GLuint index = 0;
+	if (findID<tex*>(ID, __func__, texturevec, index) != ERRCHK_SUCCESS) return 0;
+
+	return texturevec[index]->handler;
+}
+
+
 inline ERRenum GLcommon::EXIT(ERRenum err){
     if(err != ERRCHK_SUCCESS) errchk = false;
     return err;
@@ -565,9 +612,8 @@ inline bool GLcommon::checkContextFlg(const char *funcname){
 }
 
 ERRenum GLcommon::Draw(std::function<void(void)> fn){
-    if(!errchk) return EXIT(ERRCHK_SKIP);
-    if(!checkContextFlg(__func__)) return EXIT(ERRCHK_CONTEXT_ABORT);
-    
+	ERRCHECK();
+	drawCall = true;
     do{
         fn();
         flush();
@@ -580,7 +626,7 @@ ERRenum GLcommon::Draw(std::function<void(void)> fn){
 void GLcommon::flush()
 {
 	glfwSwapBuffers(window);
-	glfwWaitEvents();
+	glfwPollEvents();
 }
 
 bool GLcommon::closeflg()
